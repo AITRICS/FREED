@@ -1,0 +1,24 @@
+{
+  "datasets": {
+    "default": {
+      "path": "datasets/5ht1b.csv"
+    },
+    "gauss": {
+      "path": "datasets/5ht1b.csv",
+      "score_column": "gauss(o=0__w=0.5__c=8)"
+    },
+    "ndhb": {
+      "path": "datasets/5ht1b.csv",
+      "score_column": "non_dir_h_bond(g=-0.7__b=0__c=8)"
+    },
+    "repulsion": {
+      "path": "datasets/5ht1b.csv",
+      "score_column": "repulsion(o=0__c=8)"
+    }
+  },
+  "pocket_center": [
+    -26.602,
+    5.277,
+    17.898
+  ]
+}
