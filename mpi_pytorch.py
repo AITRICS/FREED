@@ -3,7 +3,6 @@ import numpy as np
 import os
 import torch
 from mpi4py import MPI
-# from spinup.utils.mpi_tools import broadcast, mpi_avg, num_procs, proc_id
 from mpi_tools import broadcast, mpi_avg, num_procs, proc_id
 
 def setup_pytorch_for_mpi():

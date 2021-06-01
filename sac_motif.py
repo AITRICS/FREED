@@ -250,9 +250,7 @@ class sac:
         pi_lr = 1e-4
         q_lr = 1e-4
 
-        # alpha_lr = 1e-3
         alpha_lr = 5e-4
-        # alpha_lr = 3e-4
         d_lr = 1e-3
         p_lr = 1e-3
     
@@ -296,7 +294,6 @@ class sac:
         self.ac.q1.train()
         self.ac.q2.train()
         o = data['obs']
-        # with torch.no_grad():
         _, _, o_g_emb = self.ac.embed(o)
         q1 = self.ac.q1(o_g_emb, ac_first, ac_second, ac_third).squeeze()
         q2 = self.ac.q2(o_g_emb.detach(), ac_first, ac_second, ac_third).squeeze()
@@ -345,7 +342,6 @@ class sac:
         loss_policy = torch.mean(-q_pi)        
 
         # Entropy-regularized policy loss
-        # alpha = min(self.log_alpha.exp().item(), 5)
         alpha = min(self.log_alpha.exp().item(), 20.)
         alpha = max(self.log_alpha.exp().item(), .05)
 
@@ -425,7 +421,6 @@ class sac:
         # # Use epistemic + aleatoric uncertainty
         rew_intr = self.total_var(mean_samples, logvar_samples).cpu().detach().numpy()
         # # Use epistemic uncertainty only
-        # rew_intr = self.epistemic_var(mean_samples).cpu().detach().numpy()
         
         return rew_intr.squeeze()
     
@@ -522,10 +517,8 @@ class sac:
             # Step the env
             o2, r, d, info = self.env.step(ac)
 
-            # if d and self.intr_rew:
             if d and self.intr_rew is not None:
                 o_embed_list.append(o_g_emb)
-                # ob_list.append(o)
                 ob_list.append(o2)
 
 
@@ -568,9 +561,7 @@ class sac:
                     print('self intr rew', self.intr_rew)
                     if self.intr_rew is not None:
                         if self.intr_rew == 'intr':
-                            # loss_p, intr_rew = self.compute_intr_rew(torch.stack(o_embed_list).squeeze(1), ext_rew)
                             loss_p, intr_rew = self.compute_intr_rew(ob_list, ext_rew)
-                        # intr_rew.shape = 24,
                         elif self.intr_rew == 'mc':
                             loss_p = self.compute_active_loss(ob_list, ext_rew)
                             intr_rew = self.compute_active_rew(ob_list)
@@ -598,7 +589,7 @@ class sac:
                         r_batch = ext_rew
 
                     self.replay_buffer.rew_store(r_batch, self.docking_every)
-                    # with open(self.fname, 'a') as f:
+
                     with open(self.fname[:-4]+self.init_tm+'.csv', 'a') as f:
                         for i in range(n_smi):
                             str = f'{self.env.smile_list[i]},{ext_rew[i]},{t}'+'\n'
@@ -610,9 +601,7 @@ class sac:
                     ep_len_batch = 0
 
             # Update handling
-            # with torch.autograd.set_detect_anomaly(True):
             if t >= self.update_after and t % self.update_every == 0:
-                # for j in range(self.update_every):
                 for j in range(self.update_freq):
                     batch = self.replay_buffer.sample_batch(self.device, self.batch_size)
                     t_update = time.time()

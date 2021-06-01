@@ -19,7 +19,6 @@ from dgl.nn.pytorch.glob import SumPooling
 
 from rdkit import Chem
 
-# from layers.gin_e_layer import *
 from gym_molecule.envs.env_utils_graph import ATOM_VOCAB, SFS_VOCAB, SFS_VOCAB_MOL
 
 from descriptors import ecfp, rdkit_descriptors
@@ -52,7 +51,6 @@ class GCN(nn.Module):
         self.is_normalize = is_normalize
         self.linear1 = nn.Linear(in_channels, out_channels, bias=False)
         self.activation = nn.ReLU()
-        # self.dropout = nn.Dropout(dropout)
 
     def forward(self, g):
         h_in = g.ndata['x']
@@ -64,7 +62,6 @@ class GCN(nn.Module):
         h = self.activation(h)
         if self.is_normalize:
             h = F.normalize(h, p=2, dim=1)
-        # h = self.dropout(h)
         if self.residual:
             h += h_in
         return h
@@ -83,21 +80,6 @@ class GCNPredictor(nn.Module):
         _, _, graph_emb = self.embed(o)
         pred = self.pred_layer(graph_emb)
         return pred
-
-# class GCNPredictorV2(nn.Module):
-#     def __init__(self, args):
-#         super().__init__()
-#         self.embed = GCNEmbed(args)
-#         self.act_dim = len(SFS_VOCAB) + 80 
-#         self.pred_layer = nn.Sequential(
-#                     nn.Linear((args.emb_size*2) + self.act_dim, args.emb_size, bias=False),
-#                     nn.ReLU(inplace=True),
-#                     nn.Linear(args.emb_size, 1, bias=True))
-#     def forward(self, o, ac_first_prob, ac_second_hot, ac_third_prob):
-#         _, _, graph_emb = self.embed(o)
-#         pred = self.pred_layer(torch.cat([graph_emb, ac_first_prob, ac_second_hot, ac_third_prob], dim=-1))
-#         return pred
-
 
 class GCNActive(nn.Module):
     def __init__(self, args):
@@ -142,49 +124,6 @@ class GCNActive(nn.Module):
         samples_var = torch.stack(samples_var, dim=1) # bs x n samples x 1
         
         return samples_mean, samples_var
-
-# class GCNActiveV2(nn.Module):
-#     def __init__(self, args):
-#         super().__init__()
-
-#         self.embed = GCNEmbed_MC(args)
-
-#         self.batch_size = args.batch_size
-#         self.device = args.device
-#         self.emb_size = args.emb_size
-#         self.max_action2 = len(ATOM_VOCAB)
-#         self.max_action_stop = 2
-#         self.act_dim = len(SFS_VOCAB) + 80 
-#         self.n_samples = args.n_samples
-
-#         self.pred_layer = nn.Sequential(
-#                     nn.Linear(args.emb_size*2 + self.act_dim, args.emb_size, bias=False),
-#                     nn.Dropout(args.dropout),
-#                     nn.ReLU(inplace=True))
-#         self.mean_layer = nn.Linear(args.emb_size, 1, bias=True)
-#         self.var_layer = nn.Sequential(
-#                             nn.Linear(args.emb_size, 1, bias=True),
-#                             nn.Softplus())
-
-#     def forward(self, o, ac_first_prob, ac_second_hot, ac_third_prob):
-#         _, _, graph_emb = self.embed(o)
-#         pred = self.pred_layer(torch.cat([graph_emb, ac_first_prob, ac_second_hot, ac_third_prob], dim=-1))
-#         pred_mean = self.mean_layer(pred)
-#         pred_logvar = (self.var_layer(pred) + 1e-12).log()
-#         return pred_mean, pred_logvar
-    
-#     def forward_n_samples(self, o, ac_first_prob, ac_second_hot, ac_third_prob):
-#         samples_mean = []
-#         samples_var = []
-#         for _ in range(self.n_samples):
-#             _, _, graph_emb = self.embed(o)
-#             pred = self.pred_layer(torch.cat([graph_emb, ac_first_prob, ac_second_hot, ac_third_prob], dim=-1))
-#             samples_mean.append(self.mean_layer(pred))
-#             samples_var.append((self.var_layer(pred) + 1e-12).log())
-#         samples_mean = torch.stack(samples_mean, dim=1) # bs x n samples x 1
-#         samples_var = torch.stack(samples_var, dim=1) # bs x n samples x 1
-        
-#         return samples_mean, samples_var
 
 class GCNActorCritic(nn.Module):
     def __init__(self, env, args):
@@ -435,7 +374,6 @@ class SFSPolicy(nn.Module):
         # =============================== 
         # step 2 : which motif to add - Using Descriptors
         # ===============================   
-        # emb_first_expand = emb_first.repeat(1, self.motif_type_num, 1)
         emb_first_expand = emb_first.view(-1, 1, self.emb_size).repeat(1, self.motif_type_num, 1)
         cand_expand = self.cand_desc.unsqueeze(0).repeat(g.batch_size, 1, 1)
         
@@ -686,13 +624,3 @@ class GCNEmbed(nn.Module):
         emb_graph = self.pool(g, g.ndata['x'])
         
         return g, emb_node, emb_graph
-
-
-# class Discriminator(nn.Module):
-#     def __init__(self, args):
-#         super().__init__()
-#         self.emb_size = 128
-#         self.discriminator = nn.utils.spectral_norm(nn.Linear(self.emb_size, 1, bias=True))
-
-#     def forward(self, emb):
-#         return torch.sigmoid(self.discriminator(emb))

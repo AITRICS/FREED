@@ -20,8 +20,6 @@ conda activate freed_pt
 
 ## Usage
 
-### 1. Default usage
-
 ```
 # Start training with FREED - predictive error(PE), target: fa7, fragment vocab: 91 random fragments
 
@@ -58,3 +56,4 @@ bash run_rl_ppo.sh
 
 Generated molecules are stored in ./molecule_gen
 
+## Generated Molecules
