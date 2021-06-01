@@ -331,7 +331,7 @@ class SFSPolicy(nn.Module):
         # =============================== 
         # step 2 : which motif to add - Using Descriptors
         # ===============================   
-        # emb_first_expand = emb_first.repeat(1, self.motif_type_num, 1)
+
         emb_first_expand = emb_first.view(-1, 1, self.emb_size).repeat(1, self.motif_type_num, 1)
         cand_expand = self.cand_desc.unsqueeze(0).repeat(g.batch_size, 1, 1)
         
@@ -366,7 +366,7 @@ class SFSPolicy(nn.Module):
         ac3_att_mask = ac3_att_mask.bool()
 
         ac3_cand_emb = torch.masked_select(cand_att_emb.view(1, -1, 2*self.emb_size), 
-                                ac3_att_mask.view(g.batch_size, -1, 1)).view(-1, 2*self.emb_size)#.view(1, -1, 2*self.emb_size)
+                                ac3_att_mask.view(g.batch_size, -1, 1)).view(-1, 2*self.emb_size)
         
         
         ac3_att_len = torch.index_select(self.ac3_att_len, 0, ac_second).tolist()

@@ -34,9 +34,6 @@ def gpu_setup(use_gpu, gpu_id):
 
 def train(args,seed,writer=None):
     
-    # from sac_motif_imitation import sac
-    # if args.active_learning == "mc":
-    # if args.active_learning is not None:
     if args.rl_model == 'sac':
         if args.active_learning == "mc":
             from sac_motif_mc import sac
@@ -56,14 +53,10 @@ def train(args,seed,writer=None):
     elif args.rl_model == 'vpg':
         from vpg_motif import vpg
 
-
-        # from sac_motif_picklebuffer import sac
     if args.rl_model in ['ppo', 'vpg']:
         from core_motif_vbased import GCNActorCritic
     else:
         from core_motif import GCNActorCritic
-    
-    # from core_motif import GCNActorCriticActive # Bayesian Active Learning
 
     workerseed = args.seed
     set_seed(workerseed)
@@ -176,7 +169,6 @@ def molecule_arg_parser():
 
     parser.add_argument('--adv_rew', type=int, default=1)
     parser.add_argument('--adv_rew_ratio', type=float, default=1)
-    # parser.add_argument('--intr_rew', type=int, default=1)
     parser.add_argument('--intr_rew', type=str, default=None) # intr, mc
     parser.add_argument('--intr_rew_ratio', type=float, default=5e-1)
     
@@ -256,22 +248,18 @@ def main():
     if args.target == '2oh4A':
         box_center = (37.4,36.1,12.0)
         box_size = (15.9,26.7,15.0)
-        # docking_config['receptor_file'] = '/nfs/quill/ext01/shared/rl_gcpn/ReLeaSE_Vina/docking/pdb/2oh4A_receptor.pdbqt' # romanoff 
         docking_config['receptor_file'] = 'ReLeaSE_Vina/docking/2oh4A_receptor.pdbqt'
     elif args.target == 'tgfr1':
         box_center = (14.421,66.480,5.632)
         box_size = (18.238,16.117,19.066)
-        # docking_config['receptor_file'] = '/nfs/quill/ext01/shared/rl_gcpn/ReLeaSE_Vina/docking/pdb/tgfr1/receptor.pdbqt' # romanoff 
         docking_config['receptor_file'] = 'ReLeaSE_Vina/docking/tgfr1/receptor.pdbqt'
     elif args.target == 'jak2':
         box_center = (114.758,65.496,11.345)
         box_size= (19.033,17.929,20.283)
-        # docking_config['receptor_file'] = '/nfs/quill/ext01/shared/rl_gcpn/ReLeaSE_Vina/docking/pdb/jak2/receptor.pdbqt' # romanoff 
         docking_config['receptor_file'] = 'ReLeaSE_Vina/docking/jak2/receptor.pdbqt'
     elif args.target == 'braf':
         box_center = (84.194,6.949,-7.081)
         box_size = (22.032,19.211,14.106)
-        # docking_config['receptor_file'] = '/nfs/quill/ext01/shared/rl_gcpn/ReLeaSE_Vina/docking/pdb/braf/receptor.pdbqt' # romanoff 
         docking_config['receptor_file'] = 'ReLeaSE_Vina/docking/braf/receptor.pdbqt'
     elif args.target == 'fa7':
         box_center = (10.131, 41.879, 32.097)
@@ -333,7 +321,6 @@ def main():
     device = gpu_setup(gpu_use, gpu_id)
     args.device = device
 
-    # if homer
     if args.gpu_id is None:
         torch.set_num_threads(256)
         print(torch.get_num_threads())

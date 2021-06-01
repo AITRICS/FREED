@@ -58,8 +58,6 @@ class ReplayBuffer:
 
         # Active learning buffer
         self.sampling_buf = np.zeros(size, dtype=np.float32) # r
-        # self.eps=0.05
-        # self.sampling_buf = np.array([self.eps]*size, dtype=np.float32)
         self.scaler = MinMaxScaler()
 
         # annealing effect
@@ -69,9 +67,7 @@ class ReplayBuffer:
         self.beta_frames = int(1e5)
 
     def store(self, obs, act, rew, next_obs, done, ac_prob, log_ac_prob, \
-                # ac_stop_hot, ac_first_prob, ac_second_hot, ac_third_prob, \
                 ac_first_prob, ac_second_hot, ac_third_prob, \
-                # o_embeds):
                 o_embeds, sampling_score):
         if self.size == self.max_size:
             self.obs_buf.pop(0)
@@ -108,7 +104,7 @@ class ReplayBuffer:
         self.size = min(self.size+1, self.max_size)
 
     def rew_store(self, rew, intr_rew, batch_size=32):
-    # def rew_store(self, rew, batch_size=32):
+
         """
             rew_store for intrinsic reward as 
         """
@@ -147,24 +143,6 @@ class ReplayBuffer:
         self.size = min(self.size-len(zero_ptrs), self.max_size)
         self.ptr = (self.ptr-len(zero_ptrs)) % self.max_size
 
-    # def compute_active_rew(self, ob):
-
-    #     # Acquire MC samples first
-    #     """
-    #         For regression this epistemic uncertainty is captured
-    #         by the predictive variance, which can be approximated as:
-    #     """
-    #     mean_infer = []
-    #     logvar_infer = []
-    #     with torch.no_grad():
-    #         mean_samples, logvar_samples = self.ac.p.forward_n_samples(ob)
-    #     rew_intr = self.epistemic_var(mean_samples, logvar_samples).cpu().detach().numpy()
-        
-    #     return rew_intr.squeeze()
-        
-    # def epistemic_var(self, x_samples, logvar_samples):
-    #     return torch.var(x_samples, dim=1) + torch.mean(logvar_samples.exp(), dim=1)
-
     def sample_batch(self, device, t, batch_size=32):
  
         # Weighted Sampling
@@ -181,7 +159,6 @@ class ReplayBuffer:
 
         # Weighted sampling with Uncertainty calculation Every step
         
-        # sampling_score_batch = torch.as_tensor(sampling_score[idxs], dtype=torch.float32).to(device)
         sampling_score_batch = sampling_score[idxs]
         # Importance Correction
         beta = self.beta_by_frame(t)
@@ -245,14 +222,10 @@ class ReplayBuffer:
 def xavier_uniform_init(m):
     if type(m) == nn.Linear:
         torch.nn.init.xavier_uniform(m.weight)
-        # if m.bias is not None:
-        #     m.bias.data.fill_(0.01)
 
 def xavier_normal_init(m):
     if type(m) == nn.Linear:
         torch.nn.init.xavier_normal(m.weight)
-        # if m.bias is not None:
-        #     m.bias.data.fill_(0.01)
 
 class sac:
     """
@@ -292,7 +265,6 @@ class sac:
 
         self.env, self.test_env = env_fn, deepcopy(env_fn)
 
-        # self.obs_dim = 128
         self.obs_dim = args.emb_size * 2
         self.act_dim = len(SFS_VOCAB)-1
 
@@ -308,16 +280,9 @@ class sac:
         self.ac1_dims = 40 
         self.ac2_dims = len(SFS_VOCAB) # 76
         self.ac3_dims = 40 
-        # self.action_dims = [self.ac_stop_dims, self.ac1_dims, self.ac2_dims, self.ac3_dims]
+
         self.action_dims = [self.ac1_dims, self.ac2_dims, self.ac3_dims]
 
-        # self.target_entropy = 1.0
-        # self.target_entropy = -math.log(1/2)
-        # self.target_entropy -= math.log(1/4)
-        # self.target_entropy -= math.log(1/76)
-        # self.target_entropy -= math.log(1/4)
-        # self.target_entropy /= 4
-        # self.target_entropy = 1.
         self.target_entropy = args.target_entropy
         
         self.log_alpha = torch.tensor([np.log(alpha)], requires_grad=train_alpha) 
@@ -352,16 +317,13 @@ class sac:
         pi_lr = 1e-4
         q_lr = 1e-4
 
-        # alpha_lr = 1e-3
         alpha_lr = 5e-4
-        # alpha_lr = 3e-4
         d_lr = 1e-3
         p_lr = 1e-3
     
         ## OPTION2: OPTIMIZER SETTING        
         self.pi_params = list(self.ac.pi.parameters())
         self.q_params = list(self.ac.q1.parameters()) + list(self.ac.q2.parameters()) + list(self.ac.embed.parameters())
-        # self.d_params = list(self.ac.disc.parameters())
         self.p_params = list(self.ac.p.parameters())
         self.alpha_params = [self.log_alpha]
 
@@ -369,11 +331,9 @@ class sac:
 
         self.pi_optimizer = Adam(self.pi_params, lr=pi_lr, weight_decay=1e-4)
         self.q_optimizer = Adam(self.q_params, lr=q_lr, weight_decay=1e-4)
-        # self.d_optimizer = Adam(self.d_params, lr=d_lr, weight_decay=1e-4)
         self.p_optimizer = Adam(self.p_params, lr=p_lr, weight_decay=1e-4)
         self.alpha_optimizer = Adam(self.alpha_params, lr=alpha_lr, eps=1e-4)
 
-        # self.q_scheduler = lr_scheduler.StepLR(self.q_optimizer, step_size=500, gamma=0.5)
         self.q_scheduler = lr_scheduler.ReduceLROnPlateau(self.q_optimizer, factor=0.1, patience=768) 
         self.pi_scheduler = lr_scheduler.ReduceLROnPlateau(self.pi_optimizer, factor=0.1, patience=768)
         self.p_scheduler = lr_scheduler.ReduceLROnPlateau(self.p_optimizer, factor=0.1, patience=500)
@@ -386,42 +346,27 @@ class sac:
         # active learning
         self.dropout = args.dropout
         self.active_learning = args.active_learning
-
-        # self.alpha_start = self.update_after # 4000
-        # self.alpha_end = self.update_after + 50000 # 7000
-
         
         self.alpha_start = self.start_steps # + 3000
         self.alpha_end = self.start_steps + 30000 # + 7000
-        # self.alpha_end = self.start_steps + 30000 # + 7000
         self.t = 0
-
-        # # ERE
-        # self.eta_0 = 0.996
-        # self.eta_T = 1.0
-        # self.n_interactions = steps_per_epoch * epochs
-        # self.scaler = MinMaxScaler()
         
         self.ac.apply(xavier_uniform_init)
         # self.ac.apply(xavier_normal_init)
-        # self.intr_epochs = 5
 
         tm = time.localtime(time.time())
         self.init_tm = time.strftime('_%Y-%m-%d_%I:%M:%S-%p', tm)
 
     def compute_loss_q(self, data):
 
-        # ac_stop, ac_first, ac_second, ac_third = data['ac_stop'], data['ac_first'], data['ac_second'], data['ac_third']
         ac_first, ac_second, ac_third = data['ac_first'], data['ac_second'], data['ac_third']
         sampling_score = data['sampling_score']
         # # Importance corrections
-        # beta = self.replay_buffer.beta_by_frame(self.t)
-        # sampling_score = sampling_score**(-beta)
 
         self.ac.q1.train()
         self.ac.q2.train()
         o = data['obs']
-        # with torch.no_grad():
+
         _, _, o_g_emb = self.ac.embed(o)
         q1 = self.ac.q1(o_g_emb, ac_first, ac_second, ac_third).squeeze()
         q2 = self.ac.q2(o_g_emb.detach(), ac_first, ac_second, ac_third).squeeze()
@@ -429,7 +374,7 @@ class sac:
         # Target actions come from *current* policy
         o2 = data['obs2']
         r, d = data['rew'], data['done']
-        # alpha = min(self.log_alpha.exp().item(), 5)
+
         with torch.no_grad():
             o2_g, o2_n_emb, o2_g_emb = self.ac.embed(o2)
             cands = self.ac.embed(self.ac.pi.cand)
@@ -437,14 +382,13 @@ class sac:
             # Target Q-values
             q1_pi_targ = self.ac_targ.q1(o2_g_emb, ac2_first, ac2_second, ac2_third)
             q2_pi_targ = self.ac_targ.q2(o2_g_emb, ac2_first, ac2_second, ac2_third)
-            q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ).squeeze() #- alpha * log_a2_prob.sum(dim=1)
+            q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ).squeeze()
             backup = r + self.gamma * (1 - d) * q_pi_targ
 
         print('back up', backup[:10])
         print('q1', q1[:10])
         # MSE loss against Bellman backup
-        # loss_q1 = ((q1 - backup)**2).mean()
-        # loss_q2 = ((q2 - backup)**2).mean()
+
         loss_q1 = ((q1 - backup)**2*sampling_score).mean()
         loss_q2 = ((q2 - backup)**2*sampling_score).mean()
         loss_q = loss_q1 + loss_q2
@@ -455,9 +399,6 @@ class sac:
     # Set up function for computing SAC pi loss
     def compute_loss_pi(self, data):
         sampling_score = data['sampling_score']
-        # # Importance correction
-        # beta = self.replay_buffer.beta_by_frame(self.t)
-        # sampling_score = sampling_score**(-beta)
 
         with torch.no_grad():
             o_embeds = self.ac.embed(data['obs'])   
@@ -478,21 +419,12 @@ class sac:
         loss_policy = torch.mean(-q_pi*sampling_score)         
 
         # Entropy-regularized policy loss
-        # alpha = min(self.log_alpha.exp().item(), 5)
         alpha = min(self.log_alpha.exp().item(), 20.)
         alpha = max(self.log_alpha.exp().item(), .05)
 
         loss_entropy = 0
         loss_alpha = 0
         # # OG version
-        # ent_weight = [1, 1, 1]
-        # for i in range(len(self.action_dims)):
-        #     # loss_entropy_i = (ac_prob_sp[i] * alpha * log_ac_prob_sp[i]).sum(dim=1).mean()
-        #     loss_entropy_i = ((ac_prob_sp[i] * alpha * log_ac_prob_sp[i]).sum(dim=1)*sampling_score).mean()
-        #     loss_entropy += loss_entropy_i * ent_weight[i] 
-        #     loss_alpha_i = -(self.log_alpha.to(self.device) * \
-        #                     (torch.sum(log_ac_prob_sp[i] * ac_prob_sp[i], dim=1) + self.target_entropy).detach()).mean()
-        #     loss_alpha += loss_alpha_i
 
         # New version
         ent_weight = [1, 1, 1]
@@ -523,19 +455,10 @@ class sac:
 
         return loss_entropy, loss_policy, loss_alpha
 
-    # def compute_intr_rew(self, o_embed, rew):
-    # def compute_intr_rew(self, ob, rew):
-    #     pred = self.ac.p(ob).squeeze()
-    #     rew = torch.tensor(rew).to(self.device).float()
-    #     rew_intr = torch.abs(pred - rew).cpu().detach().numpy()
-    #     loss_p = self.L2_loss(pred, rew).float()
-    #     return loss_p, rew_intr
-
     def compute_intr_loss_rew(self, ob, rew):
         pred = self.ac.p(ob).squeeze()
         rew = torch.tensor(rew).to(self.device).float()
         rew_intr = torch.abs(pred - rew).cpu().detach().numpy()
-        # rew_intr = torch.maximum((rew-pred),torch.zeros_like(pred)).cpu().detach().numpy()
         loss_p = self.L2_loss(pred, rew).float()
         return loss_p, rew_intr
 
@@ -544,7 +467,6 @@ class sac:
             pred = self.ac.p(ob).squeeze()
             rew = torch.tensor(rew).to(self.device).float()
             rew_intr = torch.abs(pred - rew).cpu().detach().numpy()
-            # rew_intr = torch.maximum((rew-pred),torch.zeros_like(pred)).cpu().detach().numpy()
         return rew_intr
     
     def L2_dist(self, x, y):
@@ -555,57 +477,6 @@ class sac:
 
     def epistemic_var(self, x_samples, logvar_samples):
         return torch.var(x_samples, dim=1) + torch.mean(logvar_samples.exp(), dim=1)
-
-    def compute_active_loss_rew(self, ob, rew):
-
-        # Acquire MC samples first
-        """
-            For regression this epistemic uncertainty is captured
-            by the predictive variance, which can be approximated as:
-        """
-        mean_infer = []
-        logvar_infer = []
-        with torch.no_grad():
-            mean_samples, logvar_samples = self.ac.p.forward_n_samples(ob)
-        rew_intr = self.epistemic_var(mean_samples, logvar_samples).cpu().detach().numpy()
-        print('rew intr', rew_intr.shape)
-        
-        # Acquire single sample for loss calculation
-        pred_mean, pred_logvar  = self.ac.p(ob)
-        rew = torch.tensor(rew).to(self.device).float()
-        
-        # rew_intr = torch.abs(pred - rew).cpu().detach().numpy()
-        # loss_p = self.L2_loss(pred, rew).float()
-        
-        loss_p = self.MCDropoutLoss(pred_mean, pred_logvar, rew).float()
-        print('pred logvar', pred_logvar.shape)
-        print('loss p', loss_p.shape)
-        return loss_p, rew_intr.squeeze()
-
-    def compute_active_loss(self, ob, rew):
-        
-        # Acquire single sample for loss calculation
-        pred_mean, pred_logvar  = self.ac.p(ob)
-        rew = torch.tensor(rew).to(self.device).float()
-        
-        loss_p = self.MCDropoutLoss(pred_mean, pred_logvar, rew).float()
-
-        return loss_p
-
-    def compute_active_rew(self, ob):
-
-        # Acquire MC samples first
-        """
-            For regression this epistemic uncertainty is captured
-            by the predictive variance, which can be approximated as:
-        """
-        mean_infer = []
-        logvar_infer = []
-        with torch.no_grad():
-            mean_samples, logvar_samples = self.ac.p.forward_n_samples(ob)
-        rew_intr = self.epistemic_var(mean_samples, logvar_samples).cpu().detach().numpy()
-        
-        return rew_intr.squeeze()
     
     def update(self, data):
         # First run one gradient descent step for Q1 and Q2
@@ -616,8 +487,6 @@ class sac:
         loss_q.backward()
         clip_grad_norm_(self.q_params, 5)
         for q in list(self.q_params):
-            # print("qgrad")
-            # print(q.grad.abs().mean().item())
             ave_q_grads.append(q.grad.abs().mean().item())
         self.writer.add_scalar("grad_q", np.array(ave_q_grads).mean(), self.iter_so_far)
         self.q_optimizer.step()
@@ -634,8 +503,6 @@ class sac:
         loss_pi.backward()
         clip_grad_norm_(self.pi_params, 5)
         for p in self.pi_params:
-            # print('pgrad')
-            # print(p.grad.mean())
             ave_pi_grads.append(p.grad.abs().mean().item())
         self.writer.add_scalar("grad_pi", np.array(ave_pi_grads).mean(), self.iter_so_far)
         self.pi_optimizer.step()
@@ -724,24 +591,13 @@ class sac:
                                 self.ac.q2(o_g_emb, ac_first, ac_second, ac_third))
                     intr_rew = self.compute_intr_rew([o], q_pred)
                 
-                # # PER sampling score acquisition
-                # # Get MC sampling score
-                # if self.active_learning == "intr":
-                #     intr_rew = self.compute_intr_rew([o])
-
-                # if self.writer:
-                #     # self.writer.add_scalar("EpIntRet", sum(intr_rew)/n_smi, self.iter_so_far)
-                #     self.writer.add_scalar("EpActiveRet", intr_rew, self.iter_so_far)
-                
                 if type(ac) == np.ndarray:
                     self.replay_buffer.store(o, ac, r, o2, r_d, 
                                             ac_prob, log_ac_prob, ac_first, ac_second, ac_third,
-                                            # o_embeds)
                                             o_embeds, intr_rew)
                 else:    
                     self.replay_buffer.store(o, ac.detach().cpu().numpy(), r, o2, r_d, 
                                             ac_prob, log_ac_prob, ac_first, ac_second, ac_third,
-                                            # o_embeds)
                                             o_embeds, intr_rew)
 
             # Super critical, easy to overlook step: make sure to update 
@@ -765,8 +621,6 @@ class sac:
                 if n_smi > 0:
                     ext_rew = self.env.reward_batch()
                     
-                    # if self.intr_rew:
-                    # if self.active_learning is not None:
                     if self.active_learning == "intr":
 
                         # Version 2: update on instances with rewards, infer sampling scores on all instances
@@ -783,7 +637,6 @@ class sac:
                             clip_grad_norm_(self.p_params, 5)
                             self.p_optimizer.step()
                             self.p_scheduler.step(loss_p)
-                            # self.writer.add_scalar("loss_P", loss_p.item(), self.iter_so_far)
                             self.writer.add_scalar("loss_Actives", loss_p.item(), self.iter_so_far)
                             self.writer.add_scalar("EpActiveRet", intr_rew.mean(), self.iter_so_far)
 
@@ -793,11 +646,8 @@ class sac:
                     ob_list = []
                     o_embed_list = []
                     r_batch = ext_rew
-                    # self.replay_buffer.rew_store(r_batch, self.docking_every)
                     self.replay_buffer.rew_store(r_batch, intr_rew, self.docking_every)
-                    # self.replay_buffer.sampling_score_store(intr_rew, self.docking_every)
 
-                    # with open(self.fname, 'a') as f:
                     with open(self.fname[:-3]+self.init_tm+'.csv', 'a') as f:
                         for i in range(n_smi):
                             str = f'{self.env.smile_list[i]},{ext_rew[i]},{t}'+'\n'
@@ -809,7 +659,6 @@ class sac:
                     ep_len_batch = 0
 
             # Update handling
-            # with torch.autograd.set_detect_anomaly(True):
             if t >= self.update_after and t % self.update_every == 0:
                 for j in range(self.update_every):
                     t_update = time.time()
@@ -825,9 +674,6 @@ class sac:
                                     [self.ac.q1(o_g_pred, batch['ac_first'], batch['ac_second'], batch['ac_third']),
                                     self.ac.q2(o_g_pred, batch['ac_first'], batch['ac_second'], batch['ac_third'])], dim=0)
                                     , dim=0)[0].squeeze()
-                        # print('q pred', q_pred.shape)
-                        # print('intr 1', self.compute_intr_rew(batch['obs'], q_pred))
-                        # print('intr 2', self.compute_intr_rew(batch['obs'], batch['rew']))
                         priorities = self.compute_intr_rew(batch['obs'], q_pred) * \
                                         (-batch['done'].float().cpu().numpy()+1) + \
                                     self.compute_intr_rew(batch['obs'], batch['rew']) * \

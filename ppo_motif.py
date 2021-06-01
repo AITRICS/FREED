@@ -14,7 +14,6 @@ from tensorboardX import SummaryWriter
 
 import gym
 
-# import core_motif as core
 import core_motif_vbased as core
 from gym_molecule.envs.env_utils_graph import SFS_VOCAB, ATOM_VOCAB
 
@@ -220,7 +219,6 @@ class ppo:
 
         self.env, self.test_env = env_fn, deepcopy(env_fn)
 
-        # self.obs_dim = 128
         self.obs_dim = args.emb_size * 2
         self.act_dim = len(SFS_VOCAB)-1
 
@@ -378,11 +376,7 @@ class ppo:
             self.pi_optimizer.zero_grad()
             loss_pi, pi_info = self.compute_loss_pi(data)
             kl = mpi_avg(pi_info['kl'])
-            #if kl > 1.5 * self.target_kl:
-            #    # logger.log('Early stopping at step %d due to reaching max kl.'%i)
-            #    print('kl', kl)
-            #    print('Early stopping at step %d due to reaching max kl.'%i)
-            #    break
+            
             loss_pi.backward()
             mpi_avg_grads(self.ac.pi)    # average grads across MPI processes
             self.pi_optimizer.step()
@@ -418,7 +412,6 @@ class ppo:
         ep_len_batch = 0
         o_embed_list = []
 
-        # for t in range(total_steps):
         for epoch in range(self.epochs):
             print('local steps per epoch', self.local_steps_per_epoch)
             for t in range(self.local_steps_per_epoch):
@@ -451,7 +444,6 @@ class ppo:
                 print('d', d)
                 print('o2', o2)
                 if d:
-                    # ext_rew = self.env.reward_batch()
                     print(o2['smi'])
                     final_smi = get_final_smi(o2['smi'])
                     ext_rew = self.env.reward_single(

@@ -25,11 +25,6 @@ def featurize_molecule(mol, features):
         features_list.extend(feat_dict[feature['type']](mol, feature))
     return features_list
 
-
-# def ecfp(molecule, options):
-#     return [x for x in AllChem.GetMorganFingerprintAsBitVect(
-#         molecule, options['radius'], options['length'])]
-
 def ecfp(molecule):
     molecule = get_final_motif(molecule)
     return [x for x in AllChem.GetMorganFingerprintAsBitVect(
@@ -69,27 +64,12 @@ if __name__ == "__main__":
     
         # return convert_radical_electrons_to_hydrogens(m)
 
-    
-    # SFS_VOCAB = open('gym_molecule/dataset/motifs_imitation_tgfr1_atom0.txt','r').readlines() # romanoff
     SFS_VOCAB = open('gym_molecule/dataset/motifs_new.txt','r').readlines() # romanoff
     SFS_VOCAB = [s.strip('\n').split(',') for s in SFS_VOCAB] 
     SFS_VOCAB_MOL = [Chem.MolFromSmiles(s[0]) for s in SFS_VOCAB]
     SFS_VOCAB_MOL = [get_final_mol(s) for s in SFS_VOCAB_MOL]
 
     for i, mol in enumerate(SFS_VOCAB_MOL):
-        # if i < 5:
-        #     print(rdkit_descriptors(mol)) # 11, 12, 13, 14번째는 
-        # desc = descriptors_dict["MaxPartialCharge"]
-        # desc = descriptors_dict["NumRadicalElectrons"]
         desc = ecfp
-        # desc = rdkit_descriptors
         print(desc(mol))
-
-    """
-    MaxPartialCharge
-    MinPartialCharge
-    MaxAbsPartialCharge
-    MinAbsPartialCharge
-    에서 nan 뜨는거같음. 확인해보기.
-    """
     

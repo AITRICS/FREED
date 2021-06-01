@@ -281,13 +281,6 @@ class sac:
         self.ac3_dims = 40 
         self.action_dims = [self.ac1_dims, self.ac2_dims, self.ac3_dims]
 
-        # self.target_entropy = 1.0
-        # self.target_entropy = -math.log(1/2)
-        # self.target_entropy -= math.log(1/4)
-        # self.target_entropy -= math.log(1/76)
-        # self.target_entropy -= math.log(1/4)
-        # self.target_entropy /= 4
-        # self.target_entropy = 1.
         self.target_entropy = args.target_entropy
 
         self.log_alpha = torch.tensor([np.log(alpha)], requires_grad=train_alpha)
@@ -322,9 +315,7 @@ class sac:
         pi_lr = 1e-4
         q_lr = 1e-4
 
-        # alpha_lr = 1e-3
         alpha_lr = 5e-4
-        # alpha_lr = 3e-4
         d_lr = 1e-3
         p_lr = 1e-3
     
@@ -363,12 +354,10 @@ class sac:
         self.start_priorities = self.start_steps + 1000
         
         self.ac.apply(xavier_uniform_init)
-        # self.ac.apply(xavier_normal_init)
 
         tm = time.localtime(time.time())
         self.init_tm = time.strftime('_%Y-%m-%d_%I:%M:%S-%p', tm)
 
-    # def compute_loss_q(self, data):
     def compute_loss_q(self, data):
 
         ac_first, ac_second, ac_third = data['ac_first'], data['ac_second'], data['ac_third']
@@ -379,7 +368,7 @@ class sac:
         self.ac.q1.train()
         self.ac.q2.train()
         o = data['obs']
-        # with torch.no_grad():
+
         _, _, o_g_emb = self.ac.embed(o)
         q1 = self.ac.q1(o_g_emb, ac_first, ac_second, ac_third).squeeze()
         q2 = self.ac.q2(o_g_emb.detach(), ac_first, ac_second, ac_third).squeeze()
@@ -387,7 +376,7 @@ class sac:
         # Target actions come from *current* policy
         o2 = data['obs2']
         r, d = data['rew'], data['done']
-        # alpha = min(self.log_alpha.exp().item(), 5)
+
         with torch.no_grad():
             o2_g, o2_n_emb, o2_g_emb = self.ac.embed(o2)
             cands = self.ac.embed(self.ac.pi.cand)
@@ -409,12 +398,8 @@ class sac:
         print('Q loss', loss_q1, loss_q2)
 
         # update priorities of visited transitions
-        # prio_q1 = (q1 - backup)**2
-        # prio_q2 = (q2 - backup)**2
         prio_q1 = abs(q1 - backup)
         prio_q2 = abs(q2 - backup)
-        # prio_q1 = (max(q1, 0) + (q1 - backup)**2)
-        # prio_q2 = (max(q2, 0) + (q2 - backup)**2)
         
         priorities = ((prio_q1 + prio_q2)/2 + 1e-8).detach().cpu().numpy()
         self.replay_buffer.update_priorities(idxs, priorities)
@@ -440,26 +425,16 @@ class sac:
         ac_prob_sp = torch.split(ac_prob, self.action_dims, dim=1)
         log_ac_prob_sp = torch.split(log_ac_prob, self.action_dims, dim=1)
         
-        # loss_policy = torch.mean(-q_pi)  
         loss_policy = torch.mean(-q_pi*sampling_score)        
 
         # Entropy-regularized policy loss
-        # alpha = min(self.log_alpha.exp().item(), 5)
+
         alpha = min(self.log_alpha.exp().item(), 20)
         alpha = max(self.log_alpha.exp().item(), .05)
 
         loss_entropy = 0
         loss_alpha = 0
 
-        # # OG version
-        # ent_weight = [1, 1, 1]
-        # for i in range(len(self.action_dims)):
-        #     loss_entropy_i = ((ac_prob_sp[i] * alpha * log_ac_prob_sp[i]).sum(dim=1)*sampling_score).mean()
-        #     loss_entropy += loss_entropy_i * ent_weight[i] 
-        #     loss_alpha_i = -(self.log_alpha.to(self.device) * \
-        #                     (torch.sum(log_ac_prob_sp[i] * ac_prob_sp[i], dim=1) + self.target_entropy).detach()).mean()
-        #     loss_alpha += loss_alpha_i
-        
         # New version
         ent_weight = [1, 1, 1]
         # get ac1 x ac2 x ac3 
@@ -516,12 +491,8 @@ class sac:
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ).squeeze() #- alpha * log_a2_prob.sum(dim=1)
             backup = r + self.gamma * (1 - d) * q_pi_targ
 
-        # prio_q1 = (q1 - backup)**2
-        # prio_q2 = (q2 - backup)**2
         prio_q1 = abs(q1 - backup)
         prio_q2 = abs(q2 - backup)
-        # prio_q1 = (max(q1, 0) + (q1 - backup)**2)
-        # prio_q2 = (max(q2, 0) + (q2 - backup)**2)
         
         priorities = ((prio_q1 + prio_q2)/2 + 1e-8)
         print('priorities', priorities)

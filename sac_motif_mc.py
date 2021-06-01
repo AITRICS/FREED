@@ -67,7 +67,6 @@ class ReplayBuffer:
         self.beta_frames = int(1e5)
 
     def store(self, obs, act, rew, next_obs, done, ac_prob, log_ac_prob, \
-                # ac_stop_hot, ac_first_prob, ac_second_hot, ac_third_prob, \
                 ac_first_prob, ac_second_hot, ac_third_prob, \
                 o_embeds, sampling_score):
         if self.size == self.max_size:
@@ -139,24 +138,6 @@ class ReplayBuffer:
         self.size = min(self.size-len(zero_ptrs), self.max_size)
         self.ptr = (self.ptr-len(zero_ptrs)) % self.max_size
 
-    # def compute_active_rew(self, ob):
-
-    #     # Acquire MC samples first
-    #     """
-    #         For regression this epistemic uncertainty is captured
-    #         by the predictive variance, which can be approximated as:
-    #     """
-    #     mean_infer = []
-    #     logvar_infer = []
-    #     with torch.no_grad():
-    #         mean_samples, logvar_samples = self.ac.p.forward_n_samples(ob)
-    #     rew_intr = self.epistemic_var(mean_samples, logvar_samples).cpu().detach().numpy()
-        
-    #     return rew_intr.squeeze()
-        
-    # def epistemic_var(self, x_samples, logvar_samples):
-    #     return torch.var(x_samples, dim=1) + torch.mean(logvar_samples.exp(), dim=1)
-
     def sample_batch(self, device, t, batch_size=32):
  
         # Weighted Sampling
@@ -173,7 +154,6 @@ class ReplayBuffer:
 
         # Weighted sampling with Uncertainty calculation Every step
         
-        # sampling_score_batch = torch.as_tensor(sampling_score[idxs], dtype=torch.float32).to(device)
         sampling_score_batch = sampling_score[idxs]
         # Importance Correction
         beta = self.beta_by_frame(t)
@@ -236,14 +216,10 @@ class ReplayBuffer:
 def xavier_uniform_init(m):
     if type(m) == nn.Linear:
         torch.nn.init.xavier_uniform(m.weight)
-        # if m.bias is not None:
-        #     m.bias.data.fill_(0.01)
 
 def xavier_normal_init(m):
     if type(m) == nn.Linear:
         torch.nn.init.xavier_normal(m.weight)
-        # if m.bias is not None:
-        #     m.bias.data.fill_(0.01)
 
 class sac:
     """
@@ -299,10 +275,8 @@ class sac:
         self.ac1_dims = 40 
         self.ac2_dims = len(SFS_VOCAB) # 76
         self.ac3_dims = 40 
-        # self.action_dims = [self.ac_stop_dims, self.ac1_dims, self.ac2_dims, self.ac3_dims]
         self.action_dims = [self.ac1_dims, self.ac2_dims, self.ac3_dims]
 
-        # self.target_entropy = 1.
         self.target_entropy = args.target_entropy
         
         self.log_alpha = torch.tensor([np.log(alpha)], requires_grad=train_alpha) 
@@ -337,9 +311,7 @@ class sac:
         pi_lr = 1e-4
         q_lr = 1e-4
 
-        # alpha_lr = 1e-3
         alpha_lr = 5e-4
-        # alpha_lr = 3e-4
         d_lr = 1e-3
         p_lr = 1e-3
     
@@ -358,7 +330,6 @@ class sac:
         self.p_optimizer = Adam(self.p_params, lr=p_lr, weight_decay=1e-4)
         self.alpha_optimizer = Adam(self.alpha_params, lr=alpha_lr, eps=1e-4)
 
-        # self.q_scheduler = lr_scheduler.StepLR(self.q_optimizer, step_size=500, gamma=0.5)
         self.q_scheduler = lr_scheduler.ReduceLROnPlateau(self.q_optimizer, factor=0.1, patience=768) 
         self.pi_scheduler = lr_scheduler.ReduceLROnPlateau(self.pi_optimizer, factor=0.1, patience=768)
         self.p_scheduler = lr_scheduler.ReduceLROnPlateau(self.p_optimizer, factor=0.1, patience=500)
@@ -391,17 +362,14 @@ class sac:
 
     def compute_loss_q(self, data):
 
-        # ac_stop, ac_first, ac_second, ac_third = data['ac_stop'], data['ac_first'], data['ac_second'], data['ac_third']
         ac_first, ac_second, ac_third = data['ac_first'], data['ac_second'], data['ac_third']
         sampling_score = data['sampling_score']
         # # Importance correction
-        # beta = self.replay_buffer.beta_by_frame(self.t)
-        # sampling_score = sampling_score**(-beta)
 
         self.ac.q1.train()
         self.ac.q2.train()
         o = data['obs']
-        # with torch.no_grad():
+
         _, _, o_g_emb = self.ac.embed(o)
         q1 = self.ac.q1(o_g_emb, ac_first, ac_second, ac_third).squeeze()
         q2 = self.ac.q2(o_g_emb.detach(), ac_first, ac_second, ac_third).squeeze()
@@ -409,7 +377,7 @@ class sac:
         # Target actions come from *current* policy
         o2 = data['obs2']
         r, d = data['rew'], data['done']
-        # alpha = min(self.log_alpha.exp().item(), 5)
+
         with torch.no_grad():
             o2_g, o2_n_emb, o2_g_emb = self.ac.embed(o2)
             cands = self.ac.embed(self.ac.pi.cand)
@@ -417,7 +385,7 @@ class sac:
             # Target Q-values
             q1_pi_targ = self.ac_targ.q1(o2_g_emb, ac2_first, ac2_second, ac2_third)
             q2_pi_targ = self.ac_targ.q2(o2_g_emb, ac2_first, ac2_second, ac2_third)
-            q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ).squeeze() #- alpha * log_a2_prob.sum(dim=1)
+            q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ).squeeze()
             backup = r + self.gamma * (1 - d) * q_pi_targ
 
         print('back up', backup[:10])
@@ -449,11 +417,9 @@ class sac:
         ac_prob_sp = torch.split(ac_prob, self.action_dims, dim=1)
         log_ac_prob_sp = torch.split(log_ac_prob, self.action_dims, dim=1)
         
-        # loss_policy = torch.mean(-q_pi)      
-        loss_policy = torch.mean(-q_pi*sampling_score)         
+        loss_policy = torch.mean(-q_pi*sampling_score)   
 
         # Entropy-regularized policy loss
-        # alpha = min(self.log_alpha.exp().item(), 5)
         alpha = min(self.log_alpha.exp().item(), 20)
         alpha = max(self.log_alpha.exp().item(), .05)
 
@@ -497,17 +463,8 @@ class sac:
     def MCDropoutLoss(self, x, y, logvar):
         return torch.mean(.5*(-logvar).exp().unsqueeze(1)*self.L2_dist(x, y)) + .5*torch.mean(logvar)
 
-    def total_var(self, x_samples, logvar_samples):
-        return torch.var(x_samples, dim=1) + torch.mean(logvar_samples.exp(), dim=1)
-
     def total_stdev(self, x_samples, logvar_samples):
         return torch.sqrt(torch.var(x_samples, dim=1) + torch.mean(logvar_samples.exp(), dim=1))
-
-    def epistemic_var(self, x_samples):
-        return torch.var(x_samples, dim=1)
-
-    def epistemic_stdev(self, x_samples):
-        return torch.std(x_samples, dim=1)
 
     def compute_active_loss(self, ob, rew):
         
@@ -532,11 +489,7 @@ class sac:
             mean_samples, logvar_samples = self.ac.p.forward_n_samples(ob)
 
         # # Use epistemic + aleatoric uncertainty
-        # rew_intr = self.total_var(mean_samples, logvar_samples).cpu().detach().numpy()
         rew_intr = self.total_stdev(mean_samples, logvar_samples).cpu().detach().numpy()
-
-        # # Use epistemic only
-        # rew_intr = self.epistemic_stdev(mean_samples).cpu().detach().numpy()
         
         return rew_intr.squeeze()
     
@@ -591,8 +544,6 @@ class sac:
             self.writer.add_scalar("loss_Policy", loss_policy.item(), self.iter_so_far)
             self.writer.add_scalar("loss_Ent", loss_entropy.item(), self.iter_so_far)
             self.writer.add_scalar("loss_alpha", loss_alpha.item(), self.iter_so_far)
-            # if self.adv_rew:
-            #     self.writer.add_scalar("loss_D", loss_d.item(), self.iter_so_far)
 
         # Finally, update target networks by polyak averaging.
 
@@ -651,25 +602,21 @@ class sac:
             if any(o2['att']):
                 # # Acquire sampling scores
 
-                # intr_rew = self.compute_active_rew([o])
                 # PER sampling score acquisition
                 # Get MC sampling score
                 if self.active_learning == "mc":
                     intr_rew = self.compute_active_rew([o])
 
                 if self.writer:
-                    # self.writer.add_scalar("EpIntRet", sum(intr_rew)/n_smi, self.iter_so_far)
                     self.writer.add_scalar("EpActiveRet", intr_rew, self.iter_so_far)
                 
                 if type(ac) == np.ndarray:
                     self.replay_buffer.store(o, ac, r, o2, r_d, 
                                             ac_prob, log_ac_prob, ac_first, ac_second, ac_third,
-                                            # o_embeds)
                                             o_embeds, intr_rew)
                 else:    
                     self.replay_buffer.store(o, ac.detach().cpu().numpy(), r, o2, r_d, 
                                             ac_prob, log_ac_prob, ac_first, ac_second, ac_third,
-                                            # o_embeds)
                                             o_embeds, intr_rew)
 
             # Super critical, easy to overlook step: make sure to update 
@@ -693,8 +640,6 @@ class sac:
                 if n_smi > 0:
                     ext_rew = self.env.reward_batch()
                     
-                    # if self.intr_rew:
-                    # if self.active_learning is not None:
                     if self.active_learning == "mc":
 
                         # Version 2: update on instances with rewards, infer sampling scores on all instances
@@ -710,7 +655,6 @@ class sac:
                             clip_grad_norm_(self.p_params, 5)
                             self.p_optimizer.step()
                             self.p_scheduler.step(loss_p)
-                            # self.writer.add_scalar("loss_P", loss_p.item(), self.iter_so_far)
                             self.writer.add_scalar("loss_Actives", loss_p.item(), self.iter_so_far)
 
                         for e in self.emb_params:
@@ -720,9 +664,7 @@ class sac:
                     o_embed_list = []
                     r_batch = ext_rew
                     self.replay_buffer.rew_store(r_batch, self.docking_every)
-                    # self.replay_buffer.sampling_score_store(intr_rew, self.docking_every)
 
-                    # with open(self.fname, 'a') as f:
                     with open(self.fname[:-4]+self.init_tm+'.csv', 'a') as f:
                         for i in range(n_smi):
                             str = f'{self.env.smile_list[i]},{ext_rew[i]},{t}'+'\n'
@@ -734,7 +676,7 @@ class sac:
                     ep_len_batch = 0
 
             # Update handling
-            # with torch.autograd.set_detect_anomaly(True):
+
             if t >= self.update_after and t % self.update_every == 0:
                 for j in range(self.update_freq):
                     t_update = time.time()
