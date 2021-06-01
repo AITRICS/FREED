@@ -19,7 +19,6 @@ from dgl.nn.pytorch.glob import SumPooling
 
 from rdkit import Chem
 
-from layers.gin_e_layer import *
 from gym_molecule.envs.env_utils_graph import ATOM_VOCAB, SFS_VOCAB, SFS_VOCAB_MOL
 
 from descriptors import ecfp, rdkit_descriptors
