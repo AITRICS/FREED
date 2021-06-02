@@ -2,7 +2,6 @@
 *.pkl
 .idea/
 gym-molecule/gym_molecule.egg-info
-molecule_gen/
 ckpt/
 runs/
 tmp/
