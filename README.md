@@ -73,9 +73,10 @@ To measure hit ratio and top 5% score,
 python enrichment.py
 ```
 
-Generated moleculed in rl_final_results/molecule_gen.tar.gz, and can be acquired by
+Generated moleculed can be acquired by
 ```
 cd rl_final_results/
+gdown https://drive.google.com/uc?id=1724OJkPAraIIio9c9_48cKo-x17ALLXO
 tar -zxvf molecule_gen.tar.gz
 ```
 
