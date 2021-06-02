@@ -558,11 +558,11 @@ class sac:
                     ext_rew = self.env.reward_batch()
                     
                     # if self.intr_rew:
-                    print('self intr rew', self.intr_rew)
+
                     if self.intr_rew is not None:
-                        if self.intr_rew == 'intr':
+                        if self.intr_rew == 'pe':
                             loss_p, intr_rew = self.compute_intr_rew(ob_list, ext_rew)
-                        elif self.intr_rew == 'mc':
+                        elif self.intr_rew == 'bu':
                             loss_p = self.compute_active_loss(ob_list, ext_rew)
                             intr_rew = self.compute_active_rew(ob_list)
                         r_batch = self.intr_rew_ratio * intr_rew + ext_rew
