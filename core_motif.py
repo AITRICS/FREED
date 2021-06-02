@@ -138,16 +138,16 @@ class GCNActorCritic(nn.Module):
         self.q2 = GCNQFunction(ac_space, args, override_seed=True)
 
         # PER based model
-        if args.active_learning == 'mc':
+        if args.active_learning == 'freed_bu':
             self.p = GCNActive(args)
             
-        elif args.active_learning == 'intr':
+        elif args.active_learning == 'freed_pe':
             self.p = GCNPredictor(args)
         
         # curiosity driven model
-        if args.intr_rew == 'intr':
+        if args.intr_rew == 'pe':
             self.p = GCNPredictor(args)
-        elif args.intr_rew == 'mc':
+        elif args.intr_rew == 'bu':
             self.p = GCNActive(args)
         
         self.cand = self.create_candidate_motifs()

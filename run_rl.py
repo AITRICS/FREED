@@ -35,12 +35,12 @@ def gpu_setup(use_gpu, gpu_id):
 def train(args,seed,writer=None):
     
     if args.rl_model == 'sac':
-        if args.active_learning == "mc":
-            from sac_motif_mc import sac
+        if args.active_learning == "freed_bu":
+            from sac_motif_freed_bu import sac
+        elif args.active_learning == "freed_pe":
+            from sac_motif_freed_pe import sac
         elif args.active_learning == "per":
             from sac_motif_per import sac
-        elif args.active_learning == "intr":
-            from sac_motif_intr import sac
         elif args.active_learning is None:
             from sac_motif import sac
 
@@ -83,22 +83,6 @@ def train(args,seed,writer=None):
             expert_every=5, num_test_episodes=8, max_ep_len=args.max_action, 
             save_freq=2000, train_alpha=True)
         SAC.train()
-    elif args.rl_model == 'td3':
-        TD3 = td3(writer, args, env, actor_critic=GCNActorCritic, ac_kwargs=dict(), seed=seed, 
-            steps_per_epoch=500, epochs=100, replay_size=int(1e6), gamma=0.99, 
-            polyak=0.995, lr=args.init_lr, alpha=args.init_alpha, batch_size=args.batch_size, start_steps=args.start_steps,
-            update_after=args.update_after, update_every=args.update_every, update_freq=args.update_freq, 
-            expert_every=5, num_test_episodes=8, max_ep_len=args.max_action, 
-            save_freq=2000, train_alpha=True)
-        TD3.train()
-    elif args.rl_model == 'ddpg':
-        DDPG = ddpg(writer, args, env, actor_critic=GCNActorCritic, ac_kwargs=dict(), seed=seed, 
-            steps_per_epoch=500, epochs=100, replay_size=int(1e6), gamma=0.99, 
-            polyak=0.995, lr=args.init_lr, alpha=args.init_alpha, batch_size=args.batch_size, start_steps=args.start_steps,
-            update_after=args.update_after, update_every=args.update_every, update_freq=args.update_freq, 
-            expert_every=5, num_test_episodes=8, max_ep_len=args.max_action, 
-            save_freq=2000, train_alpha=True)
-        DDPG.train()
     
     elif args.rl_model == 'ppo':
         from mpi_tools import mpi_fork
@@ -111,18 +95,6 @@ def train(args,seed,writer=None):
             expert_every=5, num_test_episodes=8, max_ep_len=args.max_action, 
             save_freq=2000, train_alpha=True)
         PPO.train()
-
-    elif args.rl_model == 'vpg':
-        from mpi_tools import mpi_fork
-        mpi_fork(args.n_cpus)
-        
-        VPG = vpg(writer, args, env, actor_critic=GCNActorCritic, ac_kwargs=dict(), seed=seed, 
-            steps_per_epoch=args.steps_per_epoch, epochs=100, replay_size=int(1e6), gamma=0.99, 
-            polyak=0.995, lr=args.init_lr, alpha=args.init_alpha, batch_size=args.batch_size, start_steps=args.start_steps,
-            update_after=args.update_after, update_every=args.update_every, update_freq=args.update_freq, 
-            expert_every=5, num_test_episodes=8, max_ep_len=args.max_action, 
-            save_freq=2000, train_alpha=True)
-        VPG.train()
 
     env.close()
 

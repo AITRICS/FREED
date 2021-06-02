@@ -12,7 +12,7 @@ DGL requires CUDA **10.0** or higher.
 
 ```
 # Install python environment
-conda env create -f environment_gpu.yml
+conda env create -f environment_freed.yml
 
 # Activate environment
 conda activate freed_pt
@@ -56,4 +56,41 @@ bash run_rl_ppo.sh
 
 Generated molecules are stored in ./molecule_gen
 
-## Generated Molecules
+## Metrics & Generated Molecules
+
+In order to measure Quality score, hit ratio, and top 5% score,
+
+move your molecules generated in ./molecule_gen/ to ./rl_final_results/molecule_gen/.
+
+To measure quality score:
+
+```
+python filter.py
+```
+
+To measure hit ratio and top 5% score,
+```
+python enrichment.py
+```
+
+Generated moleculed in rl_final_results/molecule_gen.tar.gz, and can be acquired by
+```
+cd rl_final_results/
+tar -zxvf molecule_gen.tar.gz
+```
+
+Quality score, hit ratio, and top 5% score of generated molecules can be calculated by
+```
+cd rl_final_results/libs/
+
+# For quality score
+python filters.py --data [path_to_csv]
+# e.g. python filters.py --data ../molecule_gen/5ht1b_cleaned_alr5e-4_freed_pe_141.csv
+
+# For hit ratio and top 5% score
+python enrichment.py [path_to_csv]
+# e.g. python enrichment ../molecule_gen/5ht1b_cleaned_alr5e-4_freed_pe_141.csv
+
+```
+
+Descriptions to generated molecules are written in rl_final_results/molecule_gen/README.md
