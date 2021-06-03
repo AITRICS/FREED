@@ -140,8 +140,6 @@ class ReplayBuffer:
         """
 
         path_slice = slice(self.path_start_idx, self.ptr)
-        print('path start idx', self.path_start_idx)
-        print('ptr', self.ptr)
         rews = np.append(self.rew_buf[path_slice], last_val)
         vals = np.append(self.val_buf[path_slice], last_val)
         
@@ -160,10 +158,6 @@ class ReplayBuffer:
         the buffer, with advantages appropriately normalized (shifted to have
         mean zero and std one). Also, resets some pointers in the buffer.
         """
-        print('ptr', self.ptr)
-        print('max size', self.max_size)
-        print('obs', len(self.obs_buf))
-        print('act', self.act_buf.shape)
         assert self.ptr == self.max_size    # buffer has to be full before you can get
         
         self.ptr, self.path_start_idx = 0, 0
@@ -207,7 +201,7 @@ class ppo:
         self.batch_size = batch_size
         self.replay_size = replay_size
         self.start_steps = start_steps
-        self.max_ep_len = args.max_action
+
         self.update_after = update_after
         self.update_every = update_every
         self.update_freq = update_freq
@@ -413,7 +407,6 @@ class ppo:
         o_embed_list = []
 
         for epoch in range(self.epochs):
-            print('local steps per epoch', self.local_steps_per_epoch)
             for t in range(self.local_steps_per_epoch):
                 self.t = t
                 with torch.no_grad():
@@ -441,15 +434,11 @@ class ppo:
                     d = True
                 if not any(o2['att']):
                     d = True
-                print('d', d)
-                print('o2', o2)
                 if d:
-                    print(o2['smi'])
                     final_smi = get_final_smi(o2['smi'])
                     ext_rew = self.env.reward_single(
                                     [final_smi])
 
-                    print('ext_rew', ext_rew)
                     if ext_rew[0] > 0:
                         iter_so_far_mpi = self.iter_so_far*self.n_cpus
                         if proc_id() == 0:

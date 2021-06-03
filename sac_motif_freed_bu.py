@@ -146,11 +146,9 @@ class ReplayBuffer:
         # Normalize importance_sampling weight
         sampling_score = self.scaler.fit_transform(sampling_score.reshape(-1, 1)) # Min-max scaler for sum to one
         sampling_score = (sampling_score/sampling_score.sum()).reshape(-1)
-        print('sampling score', sampling_score.shape, sampling_score[:20])
         
         idxs = np.random.choice([i for i in range(len(sampling_score))], 
                                 size=batch_size, p=sampling_score)
-        print('idxs', idxs[:20])                                
 
         # Weighted sampling with Uncertainty calculation Every step
         
@@ -162,7 +160,6 @@ class ReplayBuffer:
         sampling_score_batch = self.scaler.fit_transform(sampling_score_batch.reshape(-1,1))
         sampling_score_batch = (sampling_score_batch/sampling_score_batch.sum()).reshape(-1)
         sampling_score_batch = torch.as_tensor(sampling_score_batch, dtype=torch.float32).to(device)
-        print('sampling score batch', sampling_score_batch[:10])
 
         obs_batch = [self.obs_buf[idx] for idx in idxs]
         obs2_batch = [self.obs2_buf[idx] for idx in idxs]
@@ -388,8 +385,6 @@ class sac:
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ).squeeze()
             backup = r + self.gamma * (1 - d) * q_pi_targ
 
-        print('back up', backup[:10])
-        print('q1', q1[:10])
         # MSE loss against Bellman backup
         loss_q1 = ((q1 - backup)**2*sampling_score).mean()
         loss_q2 = ((q2 - backup)**2*sampling_score).mean()

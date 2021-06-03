@@ -31,17 +31,6 @@ from gym_molecule.envs.env_utils_graph import *
 
 import torch
 
-# # block std out
-# @contextmanager
-# def nostdout():
-#     with open(os.devnull, "w") as devnull:
-#         old_stdout = sys.stdout
-#         sys.stdout = devnull
-#         try:
-#             yield
-#         finally:
-#             sys.stdout = old_stdout
-
 def adj2sparse(adj):
     """
         adj: [3, 47, 47] float numpy array
@@ -90,13 +79,14 @@ class MoleculeEnv(gym.Env):
         self.has_feature = has_feature
 
         # init smi
-        self.smi = 'c1([*:1])c([*:2])ccc([*:3])c1'
-        # self.smi = '[*:1]c1ccc2[nH]c(-c3cc([*:2])cc(-c4cccc([*:3])c4)c3O)cc2c1' # fa7
-        # self.smi = 'O=C(c1cccc(Cc2c([*:1])[nH]c(=O)c3cc([*:2])c([*:3])n23)c1)N1CCN([*:4])CC1' # parp1
-        # self.smi = 'C1=C([*:1])C2=NC=C(CC([*:2])C[NH+]3CCC([*:3])C([*:4])C3)[C@H]2C=C1[*:5]' # 5ht1b
-        # self.smi = '[*:1]c1c([*:2])c([*:3])c2[nH]c(-c3c([*:4])c([*:5])c([*:6])c(-c4c([*:7])c([*:8])c([*:9])c([*:10])c4)c3O)c([*:11])c2c1' # fa7V2
-        # self.smi = 'O=C(c1c([*:1])c([*:2])c([*:3])c(C([*:4])c2c([*:5])[nH]c(=O)c3c([*:6])c([*:7])c([*:8])n23)c1)N1C([*:9])C([*:10])N([*:11])C([*:12])C1' # parp1V2
-        # self.smi = 'C1=C([*:1])C2=NC=C(C([*:1])C([*:2])C([*:3])[NH+]3C([*:4])C([*:5])C([*:6])C([*:7])C3([*:8]))[C@H]2C([*:9])=C1[*:10]'# 5ht1bV2
+        self.starting_smi = 'c1([*:1])c([*:2])ccc([*:3])c1'
+        # self.starting_smi = '[*:1]c1ccc2[nH]c(-c3cc([*:2])cc(-c4cccc([*:3])c4)c3O)cc2c1' # fa7 scaffold
+        # self.starting_smi = 'O=C(c1cccc(Cc2c([*:1])[nH]c(=O)c3cc([*:2])c([*:3])n23)c1)N1CCN([*:4])CC1' # parp1 scaffold
+        # self.starting_smi = 'C1=C([*:1])C2=NC=C(CC([*:2])C[NH+]3CCC([*:3])C([*:4])C3)[C@H]2C=C1[*:5]' # 5ht1b scaffold
+        # self.starting_smi = '[*:1]c1c([*:2])c([*:3])c2[nH]c(-c3c([*:4])c([*:5])c([*:6])c(-c4c([*:7])c([*:8])c([*:9])c([*:10])c4)c3O)c([*:11])c2c1' # fa7 scaffold V2
+        # self.starting_smi = 'O=C(c1c([*:1])c([*:2])c([*:3])c(C([*:4])c2c([*:5])[nH]c(=O)c3c([*:6])c([*:7])c([*:8])n23)c1)N1C([*:9])C([*:10])N([*:11])C([*:12])C1' # parp1 scaffold V2
+        # self.starting_smi = 'C1=C([*:1])C2=NC=C(C([*:1])C([*:2])C([*:3])[NH+]3C([*:4])C([*:5])C([*:6])C([*:7])C3([*:8]))[C@H]2C([*:9])=C1[*:10]'# 5ht1b scaffold V2
+        self.smi = self.starting_smi
 
         self.mol = Chem.MolFromSmiles(self.smi)
         self.smile_list = []
@@ -119,31 +109,7 @@ class MoleculeEnv(gym.Env):
         self.min_action = min_action
 
         self.max_atom = 150
-
-        # self.reward_type = reward_type
-        # self.reward_target = reward_target
-        # self.logp_ratio = ratios['logp']
-        # self.qed_ratio = ratios['qed']
-        # self.sa_ratio = ratios['sa']
-        # self.mw_ratio = ratios['mw']
-        # self.filter_ratio = ratios['filter']
-        # self.docking_ratio = ratios['docking']
-
-        # self.action_space = gym.spaces.MultiDiscrete([2, 20, len(SFS_VOCAB), 20])
         self.action_space = gym.spaces.MultiDiscrete([20, len(SFS_VOCAB), 20])
-        # stop, where to atom1, which atom2, where to atom 
-        ## load expert data
-        cwd = os.path.dirname(__file__)
-        if data_type=='gdb':
-            path = os.path.join(os.path.dirname(cwd), 'dataset',
-                                'gdb13.rand1M.smi.gz')  # gdb 13
-        elif data_type=='zinc':
-            path = os.path.join(os.path.dirname(cwd), 'dataset',
-                                '250k_rndm_zinc_drugs_clean_sorted.smi')  # ZINC
-        elif data_type=='docking':
-            path = os.path.join(os.path.dirname(cwd), 'dataset', 
-                                'docking_selected.csv')
-        # self.dataset = gdb_dataset(path)
 
         self.counter = 0
         self.level = 0 # for curriculum learning, level starts with 0, and increase afterwards
@@ -155,17 +121,13 @@ class MoleculeEnv(gym.Env):
         self.K = Chem.MolFromSmiles('[K+]')
         self.H = Chem.MolFromSmiles('[H]')
 
-
-    def level_up(self):
-        self.level += 1
-
     def seed(self,seed):
         np.random.seed(seed=seed)
         random.seed(seed)
 
     def normalize_adj(self,adj):
         degrees = np.sum(adj,axis=2)
-        # print('degrees',degrees)
+
         D = np.zeros((adj.shape[0],adj.shape[1],adj.shape[2]))
         for i in range(D.shape[0]):
             D[i,:,:] = np.diag(np.power(degrees[i,:],-0.5))
@@ -179,36 +141,16 @@ class MoleculeEnv(gym.Env):
     def reward_batch(self):
         reward = []
         print('smiles list', self.smile_list)
-
-        # for s in self.smile_list:
-        #     # q = MolLogP(Chem.MolFromSmiles(s))
-        #     # q = reward_penalized_log_p(Chem.MolFromSmiles(s))
-        #     q = qed(Chem.MolFromSmiles(s))
-        #     reward.append(q)
-        # return np.array(reward)
         return reward_vina(self.smile_list, self.predictor)
 
     def reward_old_batch(self):
         reward = []
-        # print('smiles list', self.smile_old_list)
-
-        # for s in self.smile_list:
-        #     # q = MolLogP(Chem.MolFromSmiles(s))
-        #     # q = reward_penalized_log_p(Chem.MolFromSmiles(s))
-        #     q = qed(Chem.MolFromSmiles(s))
-        #     reward.append(q)
-        # return np.array(reward)
+        print('smiles list', self.smile_old_list)
         return reward_vina(self.smile_old_list, self.predictor)
 
     def reward_single(self, smile_list):
         reward = []
         print('smiles list', smile_list)
-        # for s in smile_list:
-        #     # q = MolLogP(Chem.MolFromSmiles(s))
-        #     # q = reward_penalized_log_p(Chem.MolFromSmiles(s))
-        #     q = qed(Chem.MolFromSmiles(s))
-        #     reward.append(q)
-        # return np.array(reward)
         return reward_vina(smile_list, self.predictor)
 
     def step(self, ac):
@@ -269,9 +211,6 @@ class MoleculeEnv(gym.Env):
 
         # get observation
         ob = self.get_observation()
-
-        
-
         return ob,reward,new,info
 
     def reset(self,smile=None):
@@ -284,13 +223,7 @@ class MoleculeEnv(gym.Env):
             Chem.SanitizeMol(self.mol, sanitizeOps=Chem.SanitizeFlags.SANITIZE_KEKULIZE)
         else:
             # init smi
-            self.smi = 'c1([*:1])c([*:2])ccc([*:3])c1'
-            # self.smi = 'O=C(CCc1cc([*:1])ccc1)NCc1cc([*:2])c([*:3])c([*:4])c1' # fa7 old
-            # self.smi = '[*:1]c1ccc2[nH]c(-c3cc([*:2])cc(-c4cccc([*:3])c4)c3O)cc2c1' # fa7
-            # self.smi = 'O=C(c1cccc(Cc2c([*:1])[nH]c(=O)c3cc([*:2])c([*:3])n23)c1)N1CCN([*:4])CC1' # parp1
-            # self.smi = 'O=C(c1c([*:1])c([*:2])c([*:3])c(C([*:4])c2c([*:5])[nH]c(=O)c3c([*:6])c([*:7])c([*:8])n23)c1)N1C([*:9])C([*:10])N([*:11])C([*:12])C1' # parp1V2
-            # self.smi = 'C1=C([*:1])C2=NC=C(C([*:1])C([*:2])C([*:3])[NH+]3C([*:4])C([*:5])C([*:6])C([*:7])C3([*:8]))[C@H]2C([*:9])=C1[*:10]'# 5ht1bV2
-            # self.smi = 'C1=C([*:1])C2=NC=C(CC([*:2])C[NH+]3CCC([*:3])C([*:4])C3)[C@H]2C=C1[*:5]' # 5ht1b
+            self.smi = self.starting_smi
             self.mol = Chem.MolFromSmiles(self.smi) 
         # self.smile_list = [] # only for single motif
         self.counter = 0
@@ -318,8 +251,7 @@ class MoleculeEnv(gym.Env):
 
         return a
 
-    def _add_motif(self, ac):
-        # ac[0]: stop, ac[1]: where on cur_mol to attach, ac[2]: what to attach, ac[3]: where on motif to attach  
+    def _add_motif(self, ac): 
         
         cur_mol = Chem.ReplaceSubstructs(self.mol, self.attach_point, self.Na)[ac[0]]
         motif = SFS_VOCAB_MOL[ac[1]]
@@ -350,11 +282,6 @@ class MoleculeEnv(gym.Env):
         return m
     
     def get_final_mol_ob(self, mol):
-        """
-        Returns a rdkit mol object of the final molecule. Converts any radical
-        electrons into hydrogens. Works only if molecule is valid
-        :return: SMILES
-        """
         m = Chem.DeleteSubstructs(mol, Chem.MolFromSmiles("*"))
         return m
 
@@ -425,26 +352,6 @@ class MoleculeEnv(gym.Env):
         
         return ob
 
-    def make_active_obs(self):
-        active_smi = pd.read_csv(self.active_smi_path, header=None, names=['smiles'])
-        num_active = active_smi.shape[0]
-
-        active_obs = []
-        for idx in range(num_active):
-            smi = active_smi['smiles'][idx]
-            ob = self.get_observation(expert_smi=smi)
-            active_obs.append(ob)
-
-        with open(self.active_pkl_path, 'wb') as f:
-            pickle.dump(active_obs, f)
-
-    def get_active_batch(self, batch_size):
-        dataset_len = self.active_dataset.shape[0]
-        idxs = np.random.randint(0, dataset_len, size=batch_size)
-
-        obs_batch = self.active_dataset[idxs]
-        return obs_batch
-
     def get_observation_mol(self,mol):
         """
         ob['adj']:d_e*n*n --- 'E'
@@ -508,28 +415,3 @@ class MoleculeEnv(gym.Env):
         ob['g'] = g
         ob['smi'] = smi
         return ob
-
-if __name__ == '__main__':
-    env = gym.make('molecule-v0') # in gym format
-
-    box_center = (37.4,36.1,12.0)
-    box_size = (15.9,26.7,15.0)
-    box_parameter = (box_center, box_size)
-
-    docking_config = dict()
-
-    docking_config['vina_program'] = 'qvina02'
-    docking_config['receptor_file'] = '../ReLeaSE_Vina/docking/pdb/2oh4A_receptor.pdbqt'
-    docking_config['box_parameter'] = box_parameter
-    docking_config['temp_dir'] = 'tmp'
-    docking_config['exhaustiveness'] = 1
-    docking_config['num_sub_proc'] = 10
-    # docking_config['num_cpu_dock'] = 1
-    docking_config['num_cpu_dock'] = 10
-    docking_config['num_modes'] = 10
-    docking_config['timeout_gen3d'] = 10
-    docking_config['timeout_dock'] = 100
-
-    m_env = MoleculeEnv(docking_config)
-    m_env.init(data_type='zinc',has_feature=True)
-

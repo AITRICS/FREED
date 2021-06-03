@@ -151,11 +151,9 @@ class ReplayBuffer:
         # Normalize importance_sampling weight
         sampling_score = self.scaler.fit_transform(sampling_score.reshape(-1, 1)) # Min-max scaler for sum to one
         sampling_score = (sampling_score/sampling_score.sum()).reshape(-1)
-        print('sampling score', sampling_score.shape, sampling_score[:20])
         
         idxs = np.random.choice([i for i in range(len(sampling_score))], 
                                 size=batch_size, p=sampling_score)
-        print('idxs', idxs[:20])                                
 
         # Weighted sampling with Uncertainty calculation Every step
         
@@ -167,7 +165,6 @@ class ReplayBuffer:
         sampling_score_batch = self.scaler.fit_transform(sampling_score_batch.reshape(-1,1))
         sampling_score_batch = (sampling_score_batch/sampling_score_batch.sum()).reshape(-1)
         sampling_score_batch = torch.as_tensor(sampling_score_batch, dtype=torch.float32).to(device)
-        print('sampling score batch', sampling_score_batch[:10])
 
         obs_batch = [self.obs_buf[idx] for idx in idxs]
         obs2_batch = [self.obs2_buf[idx] for idx in idxs]
@@ -385,8 +382,6 @@ class sac:
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ).squeeze()
             backup = r + self.gamma * (1 - d) * q_pi_targ
 
-        print('back up', backup[:10])
-        print('q1', q1[:10])
         # MSE loss against Bellman backup
 
         loss_q1 = ((q1 - backup)**2*sampling_score).mean()
@@ -468,15 +463,6 @@ class sac:
             rew = torch.tensor(rew).to(self.device).float()
             rew_intr = torch.abs(pred - rew).cpu().detach().numpy()
         return rew_intr
-    
-    def L2_dist(self, x, y):
-        return (x-y)**2
-
-    def MCDropoutLoss(self, x, y, logvar):
-        return torch.mean(.5*(-logvar).exp().unsqueeze(1)*self.L2_dist(x, y)) + .5*torch.mean(logvar)
-
-    def epistemic_var(self, x_samples, logvar_samples):
-        return torch.var(x_samples, dim=1) + torch.mean(logvar_samples.exp(), dim=1)
     
     def update(self, data):
         # First run one gradient descent step for Q1 and Q2
@@ -679,7 +665,6 @@ class sac:
                                     self.compute_intr_rew(batch['obs'], batch['rew']) * \
                                         batch['done'].float().cpu().numpy()
                         idxs = batch['idxs']
-                        print('priorities', priorities)
                         self.replay_buffer.update_priorities(idxs, priorities)
 
                     print('update time : ', j, dt_update-t_update)

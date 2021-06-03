@@ -348,8 +348,6 @@ class SFSPolicy(nn.Module):
 
         # Print gumbel otuput
         ac_second_gumbel = self.gumbel_softmax(ac_second_prob, tau=self.tau, hard=False, g_ratio=1e-3)                                 
-        print('ac second prob', ac_second_prob[0])
-        print('ac second gumbel', ac_second_gumbel[0])
         
         # ===============================  
         # step 4 : where to add on motif

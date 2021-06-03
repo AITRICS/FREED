@@ -1,6 +1,6 @@
 # Fragment-based generative RL with Explorative Experience replay for Drug design (FREED)
 
-Source codes for "Hit and Lead Discovery with Explorative RL andFragment-based Molecule Generation"
+This repository is the official Pytorch implementation of "Hit and Lead Discovery with Explorative RL andFragment-based Molecule Generation"
 
 ![figure_concept_1](./figures/figure_concept_1.png)
 
@@ -12,7 +12,8 @@ DGL requires CUDA **10.0** or higher.
 
 ```
 # Install python environment
-conda env create -f environment_freed.yml
+conda env create -f environment_freed.yml # for gpu usage
+conda env create -f environment_freed_cpu.yml # for cpu usage
 
 # Activate environment
 conda activate freed_pt
@@ -55,6 +56,13 @@ bash run_rl_ppo.sh
 ```
 
 Generated molecules are stored in ./molecule_gen
+
+If you want to train model in hit-to-lead scenario instead of de novo generation,
+
+1. Set 'self.starting_smi' to the smiles string of scaffold you wish to start.
+   This could be set in 'def init' of 'class MoleculeEnv', 'gym_molecule/envs/molecule_graph.py'.
+
+2. Set appropriate 'max_action' argument (2 in our case) in .sh file that you want to run.
 
 ## Metrics & Generated Molecules
 

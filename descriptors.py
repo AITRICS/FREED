@@ -6,7 +6,7 @@ from rdkit.Chem.rdmolops import FastFindRings
 
 current_path = os.path.dirname(os.path.abspath(__file__))
 descriptors_list = []
-# with open(os.path.join(current_path, 'files', 'descriptors_list.txt'), "r") as f:
+
 with open('gym_molecule/dataset/descriptors_list.txt', "r") as f:
     for line in f:
         descriptors_list.append(line.strip())

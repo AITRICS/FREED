@@ -312,8 +312,6 @@ class sac:
             q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ).squeeze() 
             backup = r + self.gamma * (1 - d) * q_pi_targ
 
-        print('back up', backup[:10])
-        print('q1', q1[:10])
         # MSE loss against Bellman backup
         loss_q1 = ((q1 - backup)**2).mean()
         loss_q2 = ((q2 - backup)**2).mean()
@@ -396,9 +394,6 @@ class sac:
     def total_var(self, x_samples, logvar_samples):
         return torch.var(x_samples, dim=1) + torch.mean(logvar_samples.exp(), dim=1)
 
-    def epistemic_var(self, x_samples):
-        return torch.var(x_samples, dim=1)
-
     def compute_active_loss(self, ob, rew):
         
         # Acquire single sample for loss calculation
@@ -420,7 +415,6 @@ class sac:
 
         # # Use epistemic + aleatoric uncertainty
         rew_intr = self.total_var(mean_samples, logvar_samples).cpu().detach().numpy()
-        # # Use epistemic uncertainty only
         
         return rew_intr.squeeze()
     
