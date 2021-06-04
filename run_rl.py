@@ -139,8 +139,6 @@ def molecule_arg_parser():
     parser.add_argument('--has_d_step', type=int, default=1)
     parser.add_argument('--has_d_final', type=int, default=1)
 
-    parser.add_argument('--adv_rew', type=int, default=1)
-    parser.add_argument('--adv_rew_ratio', type=float, default=1)
     parser.add_argument('--intr_rew', type=str, default=None) # intr, mc
     parser.add_argument('--intr_rew_ratio', type=float, default=5e-1)
     

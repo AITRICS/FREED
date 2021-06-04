@@ -322,19 +322,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     COLUMNS = ['SMILES', 'DOCKING', 'ITER']
-    # COLUMNS = ['ITER', 'SMILES', 'DOCKING']
-    # COLUMNS = ['SMILES', 'a1', 'a2', 'a3', 'Docking', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'a11', 'a12']
-    # COLUMNS = ['ITER', 'SMILES', 'DOCKING', 'd', 'r']
-    # COLUMNS = ['ITER', 'SMILES', 'DOCKING', 'QED']
-    # COLUMNS = ['SMILES', 'DOCKING', 'r']
 
-    # our_data_name = args.data
-    # our_datas = glob.glob(f'/home/crystal/rl_final_results/molecule_gen/{our_data_name}*')
     d_path = args.data
 
-    # filter_fn_list = get_filter_fn_list(['PAINS'], args)
-    
-    # table_path = '/nfs/romanoff/ext01/shared/DD_data/csv_files/etc/alert_collection.csv'
     table_path = 'alert_collection.csv'
     alert_table = read_df(table_path)
     PAINS_smarts = list(alert_table[alert_table['rule_set_name']=='PAINS']['smarts'])
@@ -343,45 +333,14 @@ if __name__ == '__main__':
     print(len(PAINS_smarts))
     print(len(Glaxo_smarts))
     print(len(SureChEMBL_smarts))
-    # exit(-1)
+
     print("loaded alert table")
     glaxo, sure, pains = [], [], []
-    # for i, d_path in enumerate(our_datas):
-    #     if 'morld_' in d_path:
-    #         COLUMNS = ['SMILES', 'DOCKING', 'SA', 'QED'] # morld
-    #     elif 'rei_' in d_path:
-    #         COLUMNS = ['ITER', 'SMILES', 'DOCKING', 'd', 'r'] # REINVENT
-    #     else:
-    #         COLUMNS = ['SMILES', 'DOCKING', 'ITER'] # SAC
-    #     df = pd.read_csv(d_path, names = COLUMNS)[['ITER', 'SMILES', 'DOCKING']]
-    #     df = df.loc[df['ITER']>4000]
-    #     df = df.head(3000)
-    #     print("total molecules", len(df))
-    #     tot = len(df)
-    #     # df = df.iloc[1000:]
-    #     df['MOL'] = df['SMILES'].apply(Chem.MolFromSmiles)
-    #     # print(df['MOL'].head(100))
-    #     # df = df.loc[df['MOL']!=None]
-    #     df = df.dropna(subset=['MOL'])   
-    #     print(len(df))
-    #     # print(len(df_))
-    #     # print(list(df['SMILES'].head(50)))
-    #     # exit(-1)
-    #     print("finished converting smiles to mol")
-
-    #     df['PAINS'] = df['MOL'].apply(lambda m: alert_filtering(m, PAINS_smarts))
-    #     df['Glaxo'] = df['MOL'].apply(lambda m: alert_filtering(m, Glaxo_smarts))
-    #     df['SureChEMBL'] = df['MOL'].apply(lambda m: alert_filtering(m, SureChEMBL_smarts))
-
-    #     # print("PAINS", float(len(df.loc[df['PAINS']==True])/len(df)))
-    #     pains.append(float(len(df.loc[df['PAINS']==True])/tot))
-    #     glaxo.append(float(len(df.loc[df['Glaxo']==True])/tot))
-    #     sure.append(float(len(df.loc[df['SureChEMBL']==True])/tot))
 
     if 'morld_' in d_path:
         COLUMNS = ['SMILES', 'DOCKING', 'SA', 'QED'] # morld
     elif 'rei_' in d_path:
-        COLUMNS = ['ITER', 'SMILES', 'DOCKING', 'd', 'r'] # REINVENT
+        COLUMNS = ['ITER', 'SMILES', 'DOCKING'] # REINVENT
     else:
         COLUMNS = ['SMILES', 'DOCKING', 'ITER'] # SAC
     df = pd.read_csv(d_path, names = COLUMNS)[['ITER', 'SMILES', 'DOCKING']]
@@ -389,15 +348,12 @@ if __name__ == '__main__':
     df = df.head(3000)
     print("total molecules", len(df))
     tot = len(df)
-    # df = df.iloc[1000:]
+
     df['MOL'] = df['SMILES'].apply(Chem.MolFromSmiles)
-    # print(df['MOL'].head(100))
-    # df = df.loc[df['MOL']!=None]
+
     df = df.dropna(subset=['MOL'])   
     print(len(df))
-    # print(len(df_))
-    # print(list(df['SMILES'].head(50)))
-    # exit(-1)
+
     print("finished converting smiles to mol")
 
     df['PAINS'] = df['MOL'].apply(lambda m: alert_filtering(m, PAINS_smarts))
@@ -406,17 +362,3 @@ if __name__ == '__main__':
     print("PAINS : ", float(len(df.loc[df['PAINS']==True])/tot))
     print("Glaxo : ", float(len(df.loc[df['Glaxo']==True])/tot))
     print("SureChEMBL : ", float(len(df.loc[df['SureChEMBL']==True])/tot))
-
-    # # print("PAINS", float(len(df.loc[df['PAINS']==True])/len(df)))
-    # pains.append(float(len(df.loc[df['PAINS']==True])/tot))
-    # glaxo.append(float(len(df.loc[df['Glaxo']==True])/tot))
-    # sure.append(float(len(df.loc[df['SureChEMBL']==True])/tot))
-    # print(glaxo)
-    # print(sure)
-    # print(pains)
-    # print(np.mean(np.array(glaxo)))
-    # print(np.std(np.array(glaxo)))
-    # print(np.mean(np.array(sure)))
-    # print(np.std(np.array(sure)))
-    # print(np.mean(np.array(pains)))
-    # print(np.std(np.array(pains)))

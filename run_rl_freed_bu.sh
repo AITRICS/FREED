@@ -6,7 +6,7 @@ CUDA_LAUNCH_BLOCKING=1 python run_rl.py --name='parp1_rand92_alr5e-4_freed_bu_14
                        --min_action=1 --max_action=4 \
                        --graph_emb=1 --gcn_aggregate='sum' --gcn_type='GCN' \
                        --reward_type='crystal' \
-                       --seed=141 --adv_rew=0 --intr_rew=0 --intr_rew_ratio=5e-1 --target='parp1' \
+                       --seed=141 --intr_rew=0 --intr_rew_ratio=5e-1 --target='parp1' \
                        --update_after=3000 --start_steps=4000  --update_freq=256  --init_alpha=1. \
                        --desc='ecfp' \
                        --rl_model='sac' \
