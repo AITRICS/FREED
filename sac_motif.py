@@ -203,10 +203,6 @@ class sac:
         self.obs_dim = args.emb_size * 2
         self.act_dim = len(SFS_VOCAB)-1
 
-        # gan
-        self.adv_rew = args.adv_rew
-        self.adv_rew_ratio = args.adv_rew_ratio
-
         # intrinsic reward
         self.intr_rew = args.intr_rew
         self.intr_rew_ratio = args.intr_rew_ratio
@@ -465,8 +461,6 @@ class sac:
             self.writer.add_scalar("loss_Policy", loss_policy.item(), self.iter_so_far)
             self.writer.add_scalar("loss_Ent", loss_entropy.item(), self.iter_so_far)
             self.writer.add_scalar("loss_alpha", loss_alpha.item(), self.iter_so_far)
-            if self.adv_rew:
-                self.writer.add_scalar("loss_D", loss_d.item(), self.iter_so_far)
 
         # Finally, update target networks by polyak averaging.
 
@@ -513,7 +507,7 @@ class sac:
 
             if d and self.intr_rew is not None:
                 o_embed_list.append(o_g_emb)
-                ob_list.append(o2)
+                ob_list.append(o)
 
 
             r_d = info['stop']

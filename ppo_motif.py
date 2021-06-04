@@ -215,14 +215,6 @@ class ppo:
 
         self.obs_dim = args.emb_size * 2
         self.act_dim = len(SFS_VOCAB)-1
-
-        # gan
-        self.adv_rew = args.adv_rew
-        self.adv_rew_ratio = args.adv_rew_ratio
-
-        # intrinsic reward
-        self.intr_rew = args.intr_rew
-        self.intr_rew_ratio = args.intr_rew_ratio
         
         self.ac1_dims = 40 
         self.ac2_dims = len(SFS_VOCAB) # 76
