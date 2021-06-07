@@ -11,4 +11,4 @@ CUDA_LAUNCH_BLOCKING=1 python run_rl.py --name='fa7_rand92_alr5e-4_freed_pe_23' 
                        --desc='ecfp' \
                        --rl_model='sac' \
                        --active_learning='freed_pe' \
-                       --gpu_id=1 --emb_size=64 --tau=1e-1 --batch_size=256 
+                       --gpu_id=0 --emb_size=64 --tau=1e-1 --batch_size=256 

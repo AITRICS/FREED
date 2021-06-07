@@ -595,7 +595,7 @@ class sac:
 
                 # PER sampling score acquisition
                 # Get MC sampling score
-                if self.active_learning == "mc":
+                if self.active_learning == "freed_bu":
                     intr_rew = self.compute_active_rew([o])
 
                 if self.writer:
@@ -631,7 +631,7 @@ class sac:
                 if n_smi > 0:
                     ext_rew = self.env.reward_batch()
                     
-                    if self.active_learning == "mc":
+                    if self.active_learning == "freed_bu":
 
                         # Version 2: update on instances with rewards, infer sampling scores on all instances
                         for e in self.emb_params:

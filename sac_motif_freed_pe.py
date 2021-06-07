@@ -108,6 +108,7 @@ class ReplayBuffer:
         """
             rew_store for intrinsic reward as 
         """
+        print('intr rew', intr_rew.shape)
         
         done_location_np = np.array(self.done_location)
         zeros = np.where(rew==0.0)[0]
@@ -601,7 +602,7 @@ class sac:
                 if n_smi > 0:
                     ext_rew = self.env.reward_batch()
                     
-                    if self.active_learning == "intr":
+                    if self.active_learning == "freed_pe":
 
                         # Version 2: update on instances with rewards, infer sampling scores on all instances
                         for e in self.emb_params:
@@ -626,6 +627,7 @@ class sac:
                     ob_list = []
                     o_embed_list = []
                     r_batch = ext_rew
+                    # self.replay_buffer.rew_store(r_batch, intr_rew, self.docking_every)
                     self.replay_buffer.rew_store(r_batch, intr_rew, self.docking_every)
 
                     with open(self.fname[:-3]+self.init_tm+'.csv', 'a') as f:

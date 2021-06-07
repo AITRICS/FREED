@@ -545,8 +545,6 @@ class sac:
                 if n_smi > 0:
                     ext_rew = self.env.reward_batch()
                     
-                    # if self.intr_rew:
-
                     if self.intr_rew is not None:
                         if self.intr_rew == 'pe':
                             loss_p, intr_rew = self.compute_intr_rew(ob_list, ext_rew)
