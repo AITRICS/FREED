@@ -5,7 +5,6 @@ CUDA_LAUNCH_BLOCKING=1 python run_rl.py --name='fa7_rand92_curio_mc_alr5e-4_141'
                        --name_full_load='' \
                        --min_action=1 --max_action=4 \
                        --graph_emb=1 --gcn_aggregate='sum' --gcn_type='GCN'\
-                       --reward_type='crystal' \
                        --seed=141 --target='fa7' \
                        --update_after=3000 --start_steps=4000 --update_every=256 --init_alpha=1.0 \
                        --target_entropy=3. \
