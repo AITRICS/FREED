@@ -71,7 +71,7 @@ def map_idx(idx, idx_list, mol):
   
 class MoleculeEnv(gym.Env):
     metadata = {'render.modes': ['human']}
-    def init(self, docking_config=dict(), data_type='zinc',ratios=dict(),reward_step_total=1,is_normalize=0,reward_type='gan',reward_target=0.5,has_scaffold=False, has_feature=False,is_conditional=False,conditional='low',max_action=128,min_action=20,force_final=False):
+    def init(self, docking_config=dict(), data_type='zinc',ratios=dict(),reward_step_total=1,is_normalize=0,reward_type='crystal',reward_target=0.5,has_scaffold=False, has_feature=False,is_conditional=False,conditional='low',max_action=128,min_action=20,force_final=False):
         '''
         own init function, since gym does not support passing argument
         '''

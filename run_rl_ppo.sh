@@ -5,7 +5,6 @@ CUDA_LAUNCH_BLOCKING=1 python run_rl.py --name='docking_ac4_gcn_ecfp_5ht1b_rand9
                        --name_full_load='' \
                        --min_action=1 --max_action=4 \
                        --graph_emb=1 --gcn_aggregate='sum' --gcn_type='GCN'\
-                       --reward_type='crystal' \
                        --seed=141 --intr_rew=0 --intr_rew_ratio=5e-1 --target='5ht1b' \
                        --update_after=1 --update_every=256 --steps_per_epoch=257 \
                        --start_steps=128 --init_alpha=1.0 \

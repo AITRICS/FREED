@@ -17,15 +17,9 @@ def get_att_points(mol):
 # ATOM_VOCAB = ['C', 'N', 'O', 'S', 'P', 'F', 'I', 'Cl','Br']
 ATOM_VOCAB = ['C', 'N', 'O', 'S', 'P', 'F', 'I', 'Cl','Br', '*']
 
-# SFS_VOCAB = open('/home/crystal/rl_gcpn/gym_molecule/dataset/motifs_graph.txt','r').readlines()
-# SFS_VOCAB = open('gym_molecule/dataset/motifs_graph.txt','r').readlines() # romanoff
-# SFS_VOCAB = open('gym_molecule/dataset/motifs_new.txt','r').readlines() # active
-# SFS_VOCAB = open('gym_molecule/dataset/motifs_new_rand.txt','r').readlines() # random
 SFS_VOCAB = open('gym_molecule/dataset/motifs_zinc_random_92.txt','r').readlines() # random
-# SFS_VOCAB = open('gym_molecule/dataset/motif_cleaned.txt','r').readlines() # random
-# SFS_VOCAB = open('gym_molecule/dataset/motif_cleaned2.txt','r').readlines() # random
-# SFS_VOCAB = open('gym_molecule/dataset/motifs_zinc_random1_cleaned.txt','r').readlines() # random clean
-# SFS_VOCAB = open('gym_molecule/dataset/motifs_imitation_tgfr1_atom0.txt','r').readlines() # romanoff
+# SFS_VOCAB = open('gym_molecule/dataset/motif_cleaned.txt','r').readlines() # cleaned
+
 SFS_VOCAB = [s.strip('\n').split(',') for s in SFS_VOCAB] 
 SFS_VOCAB_MOL = [Chem.MolFromSmiles(s[0]) for s in SFS_VOCAB]
 SFS_VOCAB_ATT = [get_att_points(m) for m in SFS_VOCAB_MOL]

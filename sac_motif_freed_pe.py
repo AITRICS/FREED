@@ -308,10 +308,10 @@ class sac:
         self.ep_so_far = 0
 
         ## OPTION1: LEARNING RATE
-        pi_lr = 1e-4
-        q_lr = 1e-4
+        pi_lr = args.init_pi_lr
+        q_lr = args.init_q_lr
 
-        alpha_lr = 5e-4
+        alpha_lr = args.init_alpha_lr
         d_lr = 1e-3
         p_lr = 1e-3
     
@@ -343,6 +343,8 @@ class sac:
         
         self.alpha_start = self.start_steps # + 3000
         self.alpha_end = self.start_steps + 30000 # + 7000
+        self.alpha_max = args.alpha_max
+        self.alpha_min = args.alpha_min
         self.t = 0
         
         self.ac.apply(xavier_uniform_init)
@@ -411,8 +413,8 @@ class sac:
         loss_policy = torch.mean(-q_pi*sampling_score)         
 
         # Entropy-regularized policy loss
-        alpha = min(self.log_alpha.exp().item(), 20.)
-        alpha = max(self.log_alpha.exp().item(), .05)
+        alpha = min(self.log_alpha.exp().item(), args.alpha_max)
+        alpha = max(self.log_alpha.exp().item(), args.alpha_min)
 
         loss_entropy = 0
         loss_alpha = 0

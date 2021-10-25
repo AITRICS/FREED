@@ -308,10 +308,10 @@ class sac:
         self.ep_so_far = 0
 
         ## OPTION1: LEARNING RATE
-        pi_lr = 1e-4
-        q_lr = 1e-4
+        pi_lr = args.init_pi_lr
+        q_lr = args.init_q_lr
 
-        alpha_lr = 5e-4
+        alpha_lr = args.init_alpha_lr
         d_lr = 1e-3
         p_lr = 1e-3
     

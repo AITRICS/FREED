@@ -44,10 +44,6 @@ def train(args,seed,writer=None):
         elif args.active_learning is None:
             from sac_motif import sac
 
-    elif args.rl_model == 'td3':
-        from td3_motif import td3
-    elif args.rl_model == 'ddpg':
-        from ddpg_motif import ddpg
     elif args.rl_model == 'ppo':
         from ppo_motif import ppo
     elif args.rl_model == 'vpg':
@@ -71,7 +67,7 @@ def train(args,seed,writer=None):
     device = gpu_setup(gpu_use, gpu_id)
 
     env = gym.make('molecule-v0')
-    env.init(docking_config=args.docking_config, data_type=args.dataset, ratios = args.ratios, reward_step_total=args.reward_step_total,is_normalize=args.normalize_adj,reward_type=args.reward_type,reward_target=args.reward_target,has_feature=bool(args.has_feature),is_conditional=bool(args.is_conditional),conditional=args.conditional,max_action=args.max_action,min_action=args.min_action)  
+    env.init(docking_config=args.docking_config, ratios = args.ratios, reward_step_total=args.reward_step_total,is_normalize=args.normalize_adj,has_feature=bool(args.has_feature),max_action=args.max_action,min_action=args.min_action)  
     env.seed(workerseed)
 
     if args.rl_model == 'sac':
@@ -119,38 +115,38 @@ def molecule_arg_parser():
     parser.add_argument('--seed', help='RNG seed', type=int, default=666)
     parser.add_argument('--num_steps', type=int, default=int(5e7))
     
-    parser.add_argument('--dataset', type=str, default='zinc',help='caveman; grid; ba; zinc; gdb')
-    parser.add_argument('--dataset_load', type=str, default='zinc')
+    # parser.add_argument('--dataset', type=str, default='zinc',help='caveman; grid; ba; zinc; gdb')
+    # parser.add_argument('--dataset_load', type=str, default='zinc')
 
     parser.add_argument('--name',type=str,default='')
     parser.add_argument('--name_full',type=str,default='')
     parser.add_argument('--name_full_load',type=str,default='')
     
     # rewards
-    parser.add_argument('--reward_type', type=str, default='crystal',help='logppen;logp_target;qed;qedsa;qed_target;mw_target;gan')
-    parser.add_argument('--reward_target', type=float, default=0.5,help='target reward value')
+    # parser.add_argument('--reward_type', type=str, default='crystal')
+    # parser.add_argument('--reward_target', type=float, default=0.5,help='target reward value')
     parser.add_argument('--reward_step_total', type=float, default=0.5)
-    parser.add_argument('--target', type=str, default='jak2', help='jak2, tgfr1, braf, 2oh4A')
+    parser.add_argument('--target', type=str, default='fa7', help='fa7, parp1, 5ht1b')
     
-    # GAN
-    parser.add_argument('--gan_type', type=str, default='normal')# normal, recommend, wgan
-    parser.add_argument('--gan_step_ratio', type=float, default=1)
-    parser.add_argument('--gan_final_ratio', type=float, default=1)
-    parser.add_argument('--has_d_step', type=int, default=1)
-    parser.add_argument('--has_d_final', type=int, default=1)
+    # # GAN
+    # parser.add_argument('--gan_type', type=str, default='normal')# normal, recommend, wgan
+    # parser.add_argument('--gan_step_ratio', type=float, default=1)
+    # parser.add_argument('--gan_final_ratio', type=float, default=1)
+    # parser.add_argument('--has_d_step', type=int, default=1)
+    # parser.add_argument('--has_d_final', type=int, default=1)
 
     parser.add_argument('--intr_rew', type=str, default=None) # intr, mc
     parser.add_argument('--intr_rew_ratio', type=float, default=5e-1)
     
     parser.add_argument('--tau', type=float, default=1)
     
-    # Expert
-    parser.add_argument('--expert_start', type=int, default=0)
-    parser.add_argument('--expert_end', type=int, default=int(1e6))
-    parser.add_argument('--curriculum', type=int, default=0)
-    parser.add_argument('--curriculum_num', type=int, default=6)
-    parser.add_argument('--curriculum_step', type=int, default=200)
-    parser.add_argument('--supervise_time', type=int, default=4)
+    # # Expert
+    # parser.add_argument('--expert_start', type=int, default=0)
+    # parser.add_argument('--expert_end', type=int, default=int(1e6))
+    # parser.add_argument('--curriculum', type=int, default=0)
+    # parser.add_argument('--curriculum_num', type=int, default=6)
+    # parser.add_argument('--curriculum_step', type=int, default=200)
+    # parser.add_argument('--supervise_time', type=int, default=4)
 
     # model update
     parser.add_argument('--batch_size', type=int, default=256)
@@ -158,17 +154,17 @@ def molecule_arg_parser():
     parser.add_argument('--weight_decay', type=float, default=1e-6)
     parser.add_argument('--update_every', type=int, default=256)
     parser.add_argument('--update_freq', type=int, default=256)
-    parser.add_argument('--update_after', type=int, default=1000)
-    parser.add_argument('--start_steps', type=int, default=2000)
+    parser.add_argument('--update_after', type=int, default=2000)
+    parser.add_argument('--start_steps', type=int, default=3000)
     
     # model save and load
-    parser.add_argument('--save_every', type=int, default=200)
+    parser.add_argument('--save_every', type=int, default=500)
     parser.add_argument('--load', type=int, default=0)
     parser.add_argument('--load_step', type=int, default=250)
     
     # graph embedding
-    parser.add_argument('--gcn_type', type=str, default='GCN') # GCN, GINE
-    parser.add_argument('--gcn_aggregate', type=str, default='sum') # sum, mean, concat, gmt
+    parser.add_argument('--gcn_type', type=str, default='GCN')
+    parser.add_argument('--gcn_aggregate', type=str, default='sum')
     parser.add_argument('--graph_emb', type=int, default=0)
     parser.add_argument('--emb_size', type=int, default=64) # default 64
     parser.add_argument('--has_residual', type=int, default=0)
@@ -179,22 +175,27 @@ def molecule_arg_parser():
 
     parser.add_argument('--layer_num_g', type=int, default=3)
         
-    parser.add_argument('--stop_shift', type=int, default=-3)
-    parser.add_argument('--has_concat', type=int, default=0)
+    # parser.add_argument('--stop_shift', type=int, default=-3)
+    # parser.add_argument('--has_concat', type=int, default=0)
         
-    parser.add_argument('--gate_sum_d', type=int, default=0)
-    parser.add_argument('--mask_null', type=int, default=0)
+    # parser.add_argument('--gate_sum_d', type=int, default=0)
+    # parser.add_argument('--mask_null', type=int, default=0)
 
     # action
-    parser.add_argument('--is_conditional', type=int, default=0) 
-    parser.add_argument('--conditional', type=str, default='low')
-    parser.add_argument('--max_action', type=int, default=12) 
-    parser.add_argument('--min_action', type=int, default=3) 
+    # parser.add_argument('--is_conditional', type=int, default=0) 
+    # parser.add_argument('--conditional', type=str, default='low')
+    parser.add_argument('--max_action', type=int, default=4) 
+    parser.add_argument('--min_action', type=int, default=1) 
 
     # SAC
     parser.add_argument('--target_entropy', type=float, default=1.)
     parser.add_argument('--init_alpha', type=float, default=1.)
-    parser.add_argument('--desc', type=str, default='ecfp') # ecfp / desc
+    parser.add_argument('--desc', type=str, default='ecfp') # ecfp
+    parser.add_argument('--init_pi_lr', type=float, default=1e-4)
+    parser.add_argument('--init_q_lr', type=float, default=1e-4)
+    parser.add_argument('--init_alpha_lr', type=float, default=5e-4)
+    parser.add_argument('--alpha_max', type=float, default=20.)
+    parser.add_argument('--alpha_min', type=float, default=.05)
 
     # MC dropout
     parser.add_argument('--active_learning', type=str, default=None) # "mc", "per", None
@@ -210,35 +211,15 @@ def molecule_arg_parser():
 def main():
     args = molecule_arg_parser().parse_args()
     print(args)
-    args.name_full = args.env + '_' + args.dataset + '_' + args.name
+    args.name_full = args.env + '_' + args.name
 
     docking_config = dict()
     
-    assert args.target in ['2oh4A', 'tgfr1', 'jak2', 'braf', 'fa7', 'drd3', 'parp1', '5ht1b'], "Wrong target type"
-    if args.target == '2oh4A':
-        box_center = (37.4,36.1,12.0)
-        box_size = (15.9,26.7,15.0)
-        docking_config['receptor_file'] = 'ReLeaSE_Vina/docking/2oh4A_receptor.pdbqt'
-    elif args.target == 'tgfr1':
-        box_center = (14.421,66.480,5.632)
-        box_size = (18.238,16.117,19.066)
-        docking_config['receptor_file'] = 'ReLeaSE_Vina/docking/tgfr1/receptor.pdbqt'
-    elif args.target == 'jak2':
-        box_center = (114.758,65.496,11.345)
-        box_size= (19.033,17.929,20.283)
-        docking_config['receptor_file'] = 'ReLeaSE_Vina/docking/jak2/receptor.pdbqt'
-    elif args.target == 'braf':
-        box_center = (84.194,6.949,-7.081)
-        box_size = (22.032,19.211,14.106)
-        docking_config['receptor_file'] = 'ReLeaSE_Vina/docking/braf/receptor.pdbqt'
-    elif args.target == 'fa7':
+    assert args.target in ['fa7', 'parp1', '5ht1b'], "Wrong target type"
+    if args.target == 'fa7':
         box_center = (10.131, 41.879, 32.097)
         box_size = (20.673, 20.198, 21.362)
         docking_config['receptor_file'] = 'ReLeaSE_Vina/docking/fa7/receptor.pdbqt'
-    elif args.target == 'drd3':
-        box_center = (9.140, 21.192, 24.264)
-        box_size = (16.568, 20.410, 15.768)
-        docking_config['receptor_file'] = 'ReLeaSE_Vina/docking/drd3/receptor.pdbqt'
     elif args.target == 'parp1':
         box_center = (26.413, 11.282, 27.238)
         box_size = (18.521, 17.479, 19.995)
@@ -280,7 +261,7 @@ def main():
     if not os.path.exists('ckpt'):
         os.makedirs('ckpt')
 
-    writer = SummaryWriter(comment='_'+args.dataset+'_'+args.name)
+    writer = SummaryWriter(comment='_'+args.name)
 
     # device
     gpu_use = False
