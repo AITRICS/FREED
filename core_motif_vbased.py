@@ -21,7 +21,7 @@ from dgl.nn.pytorch.glob import SumPooling
 from rdkit import Chem
 
 from layers.gin_e_layer import *
-from gym_molecule.envs.env_utils_graph import ATOM_VOCAB, SFS_VOCAB, SFS_VOCAB_MOL
+from gym_molecule.envs.env_utils_graph import ATOM_VOCAB, FRAG_VOCAB, FRAG_VOCAB_MOL
 
 from descriptors import ecfp, rdkit_descriptors
 from core_motif_mc import GCNEmbed_MC
@@ -99,7 +99,7 @@ class GCNActorCritic(nn.Module):
         self.cand = self.create_candidate_motifs()
 
     def create_candidate_motifs(self):
-        motif_gs = [self.env.get_observation_mol(mol) for mol in SFS_VOCAB_MOL]
+        motif_gs = [self.env.get_observation_mol(mol) for mol in FRAG_VOCAB_MOL]
         return motif_gs
 
     def step(self, o_g_emb, o_n_emb, o_g, cands):
@@ -160,7 +160,7 @@ class SFSPolicy(nn.Module):
         super().__init__()
         self.device = args.device
         self.batch_size = args.batch_size
-        self.ac_dim = len(SFS_VOCAB)-1
+        self.ac_dim = len(FRAG_VOCAB)-1
         self.emb_size = args.emb_size
         self.tau = args.tau
         
@@ -220,7 +220,7 @@ class SFSPolicy(nn.Module):
                                 for i, x in enumerate(self.cand)], dim=0).to(self.device)
 
     def create_candidate_motifs(self):
-        motif_gs = [self.env.get_observation_mol(mol) for mol in SFS_VOCAB_MOL]
+        motif_gs = [self.env.get_observation_mol(mol) for mol in FRAG_VOCAB_MOL]
         return motif_gs
 
 
@@ -435,7 +435,7 @@ class SFSPolicy(nn.Module):
 
     def _distribution(self, ac_prob):
         
-        ac_prob_split = torch.split(ac_prob, [self.max_action, len(SFS_VOCAB), self.max_action], dim=1)
+        ac_prob_split = torch.split(ac_prob, [self.max_action, len(FRAG_VOCAB), self.max_action], dim=1)
         dists = [Categorical(probs=pr) for pr in ac_prob_split]
         return dists
 

@@ -3,7 +3,6 @@ import random
 import time
 import csv
 import itertools
-# from contextlib import contextmanager
 import copy
 
 import numpy as np
@@ -23,7 +22,6 @@ from rdkit.Chem.FilterCatalog import FilterCatalogParams, FilterCatalog
 
 import gym
 from gym_molecule.envs.sascorer import calculateScore
-# from gym_molecule.dataset.dataset_utils import gdb_dataset,mol_to_nx 
 from gym_molecule.envs.rewards import *
 from gym_molecule.envs.docking_simple import DockingVina
 from gym_molecule.envs.env_utils_graph import *
@@ -79,13 +77,10 @@ class MoleculeEnv(gym.Env):
         self.has_feature = has_feature
 
         # init smi
-        self.starting_smi = 'c1([*:1])c([*:2])ccc([*:3])c1'
+        self.starting_smi = 'c1([*:1])c([*:2])ccc([*:3])c1' # for hit (benzene ring)
         # self.starting_smi = '[*:1]c1ccc2[nH]c(-c3cc([*:2])cc(-c4cccc([*:3])c4)c3O)cc2c1' # fa7 scaffold
         # self.starting_smi = 'O=C(c1cccc(Cc2c([*:1])[nH]c(=O)c3cc([*:2])c([*:3])n23)c1)N1CCN([*:4])CC1' # parp1 scaffold
         # self.starting_smi = 'C1=C([*:1])C2=NC=C(CC([*:2])C[NH+]3CCC([*:3])C([*:4])C3)[C@H]2C=C1[*:5]' # 5ht1b scaffold
-        # self.starting_smi = '[*:1]c1c([*:2])c([*:3])c2[nH]c(-c3c([*:4])c([*:5])c([*:6])c(-c4c([*:7])c([*:8])c([*:9])c([*:10])c4)c3O)c([*:11])c2c1' # fa7 scaffold V2
-        # self.starting_smi = 'O=C(c1c([*:1])c([*:2])c([*:3])c(C([*:4])c2c([*:5])[nH]c(=O)c3c([*:6])c([*:7])c([*:8])n23)c1)N1C([*:9])C([*:10])N([*:11])C([*:12])C1' # parp1 scaffold V2
-        # self.starting_smi = 'C1=C([*:1])C2=NC=C(C([*:1])C([*:2])C([*:3])[NH+]3C([*:4])C([*:5])C([*:6])C([*:7])C3([*:8]))[C@H]2C([*:9])=C1[*:10]'# 5ht1b scaffold V2
         self.smi = self.starting_smi
 
         self.mol = Chem.MolFromSmiles(self.smi)
@@ -93,7 +88,7 @@ class MoleculeEnv(gym.Env):
         self.smile_old_list = []
 
         possible_atoms = ATOM_VOCAB
-        possible_motifs = SFS_VOCAB
+        possible_motifs = FRAG_VOCAB
         possible_bonds = [Chem.rdchem.BondType.SINGLE, Chem.rdchem.BondType.DOUBLE,
                           Chem.rdchem.BondType.TRIPLE, Chem.rdchem.BondType.AROMATIC]
         self.atom_type_num = len(possible_atoms)
@@ -109,7 +104,7 @@ class MoleculeEnv(gym.Env):
         self.min_action = min_action
 
         self.max_atom = 150
-        self.action_space = gym.spaces.MultiDiscrete([20, len(SFS_VOCAB), 20])
+        self.action_space = gym.spaces.MultiDiscrete([20, len(FRAG_VOCAB), 20])
 
         self.counter = 0
         self.level = 0 # for curriculum learning, level starts with 0, and increase afterwards
@@ -239,8 +234,8 @@ class MoleculeEnv(gym.Env):
             cur_mol_atts = get_att_points(self.mol)
             ac1 = np.random.randint(len(cur_mol_atts))
             ac2 = np.random.randint(self.motif_type_num)
-            motif = SFS_VOCAB_MOL[ac2]
-            ac3 = np.random.randint(len(SFS_VOCAB_ATT[ac2]))
+            motif = FRAG_VOCAB_MOL[ac2]
+            ac3 = np.random.randint(len(FRAG_VOCAB_ATT[ac2]))
             a = self.action_space.sample()
             
             a[0] = ac1
@@ -254,8 +249,8 @@ class MoleculeEnv(gym.Env):
     def _add_motif(self, ac): 
         
         cur_mol = Chem.ReplaceSubstructs(self.mol, self.attach_point, self.Na)[ac[0]]
-        motif = SFS_VOCAB_MOL[ac[1]]
-        att_point = SFS_VOCAB_ATT[ac[1]]
+        motif = FRAG_VOCAB_MOL[ac[1]]
+        att_point = FRAG_VOCAB_ATT[ac[1]]
         motif_atom = map_idx(ac[2], att_point, motif) 
         motif = Chem.ReplaceSubstructs(motif, self.attach_point, self.K)[ac[2]]
         motif = Chem.DeleteSubstructs(motif, self.K)
