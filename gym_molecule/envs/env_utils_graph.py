@@ -4,8 +4,6 @@ import csv
 import numpy as np
 from rdkit import Chem
 
-import selfies as sf
-
 def get_att_points(mol):
     att_points = []
     for a in mol.GetAtoms(): 
@@ -14,15 +12,17 @@ def get_att_points(mol):
 
     return att_points
 
-# ATOM_VOCAB = ['C', 'N', 'O', 'S', 'P', 'F', 'I', 'Cl','Br']
 ATOM_VOCAB = ['C', 'N', 'O', 'S', 'P', 'F', 'I', 'Cl','Br', '*']
 
-SFS_VOCAB = open('gym_molecule/dataset/motifs_zinc_random_92.txt','r').readlines() # random
-# SFS_VOCAB = open('gym_molecule/dataset/motif_cleaned.txt','r').readlines() # cleaned
+FRAG_VOCAB = open('gym_molecule/dataset/motifs_91.txt','r').readlines() # n=91
+# FRAG_VOCAB = open('gym_molecule/dataset/motifs_66.txt','r').readlines() # n=66
+# FRAG_VOCAB = open('gym_molecule/dataset/motifs_350.txt','r').readlines() # n=350
+# FRAG_VOCAB = open('gym_molecule/dataset/motifs_1k.txt','r').readlines() # n=1k
+# FRAG_VOCAB = open('gym_molecule/dataset/motifs_91_all_att.txt','r').readlines() # n=91 with all possible attachment sites
 
-SFS_VOCAB = [s.strip('\n').split(',') for s in SFS_VOCAB] 
-SFS_VOCAB_MOL = [Chem.MolFromSmiles(s[0]) for s in SFS_VOCAB]
-SFS_VOCAB_ATT = [get_att_points(m) for m in SFS_VOCAB_MOL]
+FRAG_VOCAB = [s.strip('\n').split(',') for s in FRAG_VOCAB] 
+FRAG_VOCAB_MOL = [Chem.MolFromSmiles(s[0]) for s in FRAG_VOCAB]
+FRAG_VOCAB_ATT = [get_att_points(m) for m in FRAG_VOCAB_MOL]
 
 def one_of_k_encoding_unk(x, allowable_set):
     """Maps inputs not in the allowable set to the last element."""
@@ -53,7 +53,7 @@ def atom_feature(atom, use_atom_meta):
             one_of_k_encoding_unk(atom.GetImplicitValence(), [0, 1, 2, 3, 4, 5]) +
             [atom.GetIsAromatic()])
 
-# TODO(Bowen): check, esp if input is not radical
+# From GCPN
 def convert_radical_electrons_to_hydrogens(mol):
     """
     Converts radical electrons in a molecule into bonds to hydrogens. Only
@@ -71,38 +71,3 @@ def convert_radical_electrons_to_hydrogens(mol):
                 a.SetNumRadicalElectrons(0)
                 a.SetNumExplicitHs(num_radical_e)
     return m
-
-
-def load_scaffold():
-    cwd = os.path.dirname(__file__)
-    path = os.path.join(os.path.dirname(cwd), 'dataset',
-                       'vocab.txt')  # gdb 13
-    with open(path, 'r') as fp:
-        reader = csv.reader(fp, delimiter=',', quotechar='"')
-        data = [Chem.MolFromSmiles(row[0]) for row in reader]
-        data = [mol for mol in data if mol.GetRingInfo().NumRings() == 1 and (mol.GetRingInfo().IsAtomInRingOfSize(0, 5) or mol.GetRingInfo().IsAtomInRingOfSize(0, 6))]
-        for mol in data:
-            Chem.SanitizeMol(mol, sanitizeOps=Chem.SanitizeFlags.SANITIZE_KEKULIZE)
-        print('num of scaffolds:', len(data))
-        return data
-
-
-def load_conditional(type='low'):
-    if type=='low':
-        cwd = os.path.dirname(__file__)
-        path = os.path.join(os.path.dirname(cwd), 'dataset',
-                            'opt.test.logP-SA')
-        import csv
-        with open(path, 'r') as fp:
-            reader = csv.reader(fp, delimiter=' ', quotechar='"')
-            data = [row+[id] for id,row in enumerate(reader)]
-    elif type=='high':
-        cwd = os.path.dirname(__file__)
-        path = os.path.join(os.path.dirname(cwd), 'dataset',
-                            'zinc_plogp_sorted.csv')
-        import csv
-        with open(path, 'r') as fp:
-            reader = csv.reader(fp, delimiter=',', quotechar='"')
-            data = [[row[1], row[0],id] for id, row in enumerate(reader)]
-            data = data[0:800]
-    return data

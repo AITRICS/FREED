@@ -19,7 +19,7 @@ from dgl.nn.pytorch.glob import SumPooling
 
 from rdkit import Chem
 
-from gym_molecule.envs.env_utils_graph import ATOM_VOCAB, SFS_VOCAB, SFS_VOCAB_MOL
+from gym_molecule.envs.env_utils_graph import ATOM_VOCAB, FRAG_VOCAB, FRAG_VOCAB_MOL
 
 from descriptors import ecfp, rdkit_descriptors
 from core_motif_mc import GCNEmbed_MC
@@ -153,7 +153,7 @@ class GCNActorCritic(nn.Module):
         self.cand = self.create_candidate_motifs()
 
     def create_candidate_motifs(self):
-        motif_gs = [self.env.get_observation_mol(mol) for mol in SFS_VOCAB_MOL]
+        motif_gs = [self.env.get_observation_mol(mol) for mol in FRAG_VOCAB_MOL]
         return motif_gs
 
     def act(self, obs, deterministic=False):
@@ -177,7 +177,7 @@ class GCNQFunction(nn.Module):
         self.max_action2 = len(ATOM_VOCAB)
         self.max_action_stop = 2
 
-        self.d = 2 * args.emb_size + len(SFS_VOCAB) + 80 
+        self.d = 2 * args.emb_size + len(FRAG_VOCAB) + 80 
         self.out_dim = 1
         
         self.qpred_layer = nn.Sequential(
@@ -202,7 +202,7 @@ class SFSPolicy(nn.Module):
         super().__init__()
         self.device = args.device
         self.batch_size = args.batch_size
-        self.ac_dim = len(SFS_VOCAB)-1
+        self.ac_dim = len(FRAG_VOCAB)-1
         self.emb_size = args.emb_size
         self.tau = args.tau
         
@@ -262,7 +262,7 @@ class SFSPolicy(nn.Module):
                                 for i, x in enumerate(self.cand)], dim=0).to(self.device)
 
     def create_candidate_motifs(self):
-        motif_gs = [self.env.get_observation_mol(mol) for mol in SFS_VOCAB_MOL]
+        motif_gs = [self.env.get_observation_mol(mol) for mol in FRAG_VOCAB_MOL]
         return motif_gs
 
 

@@ -64,12 +64,12 @@ if __name__ == "__main__":
     
         # return convert_radical_electrons_to_hydrogens(m)
 
-    SFS_VOCAB = open('gym_molecule/dataset/motifs_new.txt','r').readlines() # romanoff
-    SFS_VOCAB = [s.strip('\n').split(',') for s in SFS_VOCAB] 
-    SFS_VOCAB_MOL = [Chem.MolFromSmiles(s[0]) for s in SFS_VOCAB]
-    SFS_VOCAB_MOL = [get_final_mol(s) for s in SFS_VOCAB_MOL]
+    FRAG_VOCAB = open('gym_molecule/dataset/motifs_new.txt','r').readlines() # romanoff
+    FRAG_VOCAB = [s.strip('\n').split(',') for s in FRAG_VOCAB] 
+    FRAG_VOCAB_MOL = [Chem.MolFromSmiles(s[0]) for s in FRAG_VOCAB]
+    FRAG_VOCAB_MOL = [get_final_mol(s) for s in FRAG_VOCAB_MOL]
 
-    for i, mol in enumerate(SFS_VOCAB_MOL):
+    for i, mol in enumerate(FRAG_VOCAB_MOL):
         desc = ecfp
         print(desc(mol))
     

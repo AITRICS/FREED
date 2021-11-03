@@ -17,7 +17,7 @@ from tensorboardX import SummaryWriter
 import gym
 
 import core_motif as core
-from gym_molecule.envs.env_utils_graph import SFS_VOCAB, ATOM_VOCAB
+from gym_molecule.envs.env_utils_graph import FRAG_VOCAB, ATOM_VOCAB
 
 from sklearn.preprocessing import MinMaxScaler
 
@@ -266,14 +266,14 @@ class sac:
 
         # self.obs_dim = 128
         self.obs_dim = args.emb_size * 2
-        self.act_dim = len(SFS_VOCAB)-1
+        self.act_dim = len(FRAG_VOCAB)-1
 
         # intrinsic reward
         self.intr_rew = args.intr_rew
         self.intr_rew_ratio = args.intr_rew_ratio
 
         self.ac1_dims = 40 
-        self.ac2_dims = len(SFS_VOCAB) # 76
+        self.ac2_dims = len(FRAG_VOCAB) # 76
         self.ac3_dims = 40 
         self.action_dims = [self.ac1_dims, self.ac2_dims, self.ac3_dims]
 
