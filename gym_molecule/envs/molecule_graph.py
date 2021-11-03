@@ -21,11 +21,8 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.FilterCatalog import FilterCatalogParams, FilterCatalog
 
 import gym
-from gym_molecule.envs.sascorer import calculateScore
-from gym_molecule.envs.rewards import *
 from gym_molecule.envs.docking_simple import DockingVina
 from gym_molecule.envs.env_utils_graph import *
-
 
 import torch
 
@@ -67,6 +64,11 @@ def map_idx(idx, idx_list, mol):
     neigh_idx = mol.GetAtomWithIdx(abs_id).GetNeighbors()[0].GetIdx()
     return neigh_idx 
   
+def reward_vina(smis, predictor, reward_vina_min=0):
+    reward = - np.array(predictor.predict(smis))
+    reward = np.clip(reward, reward_vina_min, None)
+    return reward
+
 class MoleculeEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     def init(self, docking_config=dict(), data_type='zinc',ratios=dict(),reward_step_total=1,is_normalize=0,reward_type='crystal',reward_target=0.5,has_scaffold=False, has_feature=False,is_conditional=False,conditional='low',max_action=128,min_action=20,force_final=False):
@@ -137,11 +139,6 @@ class MoleculeEnv(gym.Env):
         reward = []
         print('smiles list', self.smile_list)
         return reward_vina(self.smile_list, self.predictor)
-
-    def reward_old_batch(self):
-        reward = []
-        print('smiles list', self.smile_old_list)
-        return reward_vina(self.smile_old_list, self.predictor)
 
     def reward_single(self, smile_list):
         reward = []

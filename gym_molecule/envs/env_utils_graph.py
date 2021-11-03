@@ -14,8 +14,11 @@ def get_att_points(mol):
 
 ATOM_VOCAB = ['C', 'N', 'O', 'S', 'P', 'F', 'I', 'Cl','Br', '*']
 
-FRAG_VOCAB = open('gym_molecule/dataset/motifs_zinc_random_92.txt','r').readlines() # n=91
-# FRAG_VOCAB = open('gym_molecule/dataset/motif_cleaned.txt','r').readlines() # cleaned
+FRAG_VOCAB = open('gym_molecule/dataset/motifs_91.txt','r').readlines() # n=91
+# FRAG_VOCAB = open('gym_molecule/dataset/motifs_66.txt','r').readlines() # n=66
+# FRAG_VOCAB = open('gym_molecule/dataset/motifs_350.txt','r').readlines() # n=350
+# FRAG_VOCAB = open('gym_molecule/dataset/motifs_1k.txt','r').readlines() # n=1k
+# FRAG_VOCAB = open('gym_molecule/dataset/motifs_91_all_att.txt','r').readlines() # n=91 with all possible attachment sites
 
 FRAG_VOCAB = [s.strip('\n').split(',') for s in FRAG_VOCAB] 
 FRAG_VOCAB_MOL = [Chem.MolFromSmiles(s[0]) for s in FRAG_VOCAB]
