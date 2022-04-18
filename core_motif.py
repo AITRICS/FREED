@@ -267,7 +267,7 @@ class SFSPolicy(nn.Module):
 
 
     def gumbel_softmax(self, logits: torch.Tensor, tau: float = 1, hard: bool = False, eps: float = 1e-10, dim: int = -1, \
-                    g_ratio: float = 1e-3) -> torch.Tensor:
+                    g_ratio: float = 1.) -> torch.Tensor:
         gumbels = (
             -torch.empty_like(logits, memory_format=torch.legacy_contiguous_format).exponential_().log()
         )  # ~Gumbel(0,1)
@@ -328,18 +328,17 @@ class SFSPolicy(nn.Module):
         if g.batch_size != 1:
             ac_first_prob = [torch.softmax(logit, dim=0)
                             for i, logit in enumerate(torch.split(logits_first, att_len, dim=0))]
-            ac_first_prob = [p+1e-8 for p in ac_first_prob]
             log_ac_first_prob = [x.log() for x in ac_first_prob]
 
         else:
-            ac_first_prob = torch.softmax(logits_first, dim=0) + 1e-8
+            ac_first_prob = torch.softmax(logits_first, dim=0)
             log_ac_first_prob = ac_first_prob.log()
 
         if g.batch_size != 1:  
             first_stack = []
             first_ac_stack = []
             for i, node_emb_i in enumerate(torch.split(att_emb, att_len, dim=0)):
-                ac_first_hot_i = self.gumbel_softmax(ac_first_prob[i], tau=self.tau, hard=True, dim=0).transpose(0,1)
+                ac_first_hot_i = self.gumbel_softmax(log_ac_first_prob[i], tau=self.tau, hard=True, dim=0).transpose(0,1)
                 ac_first_i = torch.argmax(ac_first_hot_i, dim=-1)
                 first_stack.append(torch.matmul(ac_first_hot_i, node_emb_i))
                 first_ac_stack.append(ac_first_i)
@@ -361,7 +360,7 @@ class SFSPolicy(nn.Module):
                                     for i, log_ac_first_prob_i in enumerate(log_ac_first_prob)], dim=0).contiguous()
             
         else:            
-            ac_first_hot = self.gumbel_softmax(ac_first_prob, tau=self.tau, hard=True, dim=0).transpose(0,1)
+            ac_first_hot = self.gumbel_softmax(log_ac_first_prob, tau=self.tau, hard=True, dim=0).transpose(0,1)
             ac_first = torch.argmax(ac_first_hot, dim=-1)
             emb_first = torch.matmul(ac_first_hot, att_emb)
             ac_first_prob = torch.cat([ac_first_prob, ac_first_prob.new_zeros(
@@ -381,18 +380,16 @@ class SFSPolicy(nn.Module):
                     self.action2_layers[1](cand_expand) + self.action2_layers[2](emb_first_expand)
 
         logit_second = self.action2_layers[3](emb_cat).squeeze(-1)
-        ac_second_prob = F.softmax(logit_second, dim=-1) + 1e-8
+        ac_second_prob = F.softmax(logit_second, dim=-1)
         log_ac_second_prob = ac_second_prob.log()
         
-        ac_second_hot = self.gumbel_softmax(ac_second_prob, tau=self.tau, hard=True, g_ratio=1e-3)                                    
+        ac_second_hot = self.gumbel_softmax(log_ac_second_prob, tau=self.tau, hard=True)   
         emb_second = torch.matmul(ac_second_hot, cand_graph_emb)
         ac_second = torch.argmax(ac_second_hot, dim=-1)
-
-        # Print gumbel otuput
-        ac_second_gumbel = self.gumbel_softmax(ac_second_prob, tau=self.tau, hard=False, g_ratio=1e-3)                                    
+                                
         
         # ===============================  
-        # step 4 : where to add on motif
+        # step 3 : where to add on motif
         # ===============================
         # Select att points from candidate
         cand_att_emb = torch.masked_select(cand_node_emb, cand_att_mask.unsqueeze(-1))
@@ -418,12 +415,11 @@ class SFSPolicy(nn.Module):
         if g.batch_size != 1:
             ac_third_prob = [torch.softmax(logit,dim=-1)
                             for i, logit in enumerate(torch.split(logits_third.squeeze(-1), ac3_att_len, dim=0))]
-            ac_third_prob = [p+1e-8 for p in ac_third_prob]
             log_ac_third_prob = [x.log() for x in ac_third_prob]
 
         else:
             logits_third = logits_third.transpose(1,0)
-            ac_third_prob = torch.softmax(logits_third, dim=-1) + 1e-8
+            ac_third_prob = torch.softmax(logits_third, dim=-1)
             log_ac_third_prob = ac_third_prob.log()
         
         # gumbel softmax sampling and zero-padding
@@ -431,7 +427,7 @@ class SFSPolicy(nn.Module):
             third_stack = []
             third_ac_stack = []
             for i, node_emb_i in enumerate(torch.split(emb_cat_ac3, ac3_att_len, dim=0)):
-                ac_third_hot_i = self.gumbel_softmax(ac_third_prob[i], tau=self.tau, hard=True, dim=-1)
+                ac_third_hot_i = self.gumbel_softmax(log_ac_third_prob[i], tau=self.tau, hard=True, dim=-1)
                 ac_third_i = torch.argmax(ac_third_hot_i, dim=-1)
                 third_stack.append(torch.matmul(ac_third_hot_i, node_emb_i))
                 third_ac_stack.append(ac_third_i)
@@ -452,7 +448,7 @@ class SFSPolicy(nn.Module):
                                     for i, log_ac_third_prob_i in enumerate(log_ac_third_prob)], dim=0).contiguous()
 
         else:
-            ac_third_hot = self.gumbel_softmax(ac_third_prob, tau=self.tau, hard=True, dim=-1)
+            ac_third_hot = self.gumbel_softmax(log_ac_third_prob, tau=self.tau, hard=True, dim=-1)
             ac_third = torch.argmax(ac_third_hot, dim=-1)
             emb_third = torch.matmul(ac_third_hot, emb_cat_ac3)
             
@@ -470,7 +466,7 @@ class SFSPolicy(nn.Module):
                             log_ac_second_prob, log_ac_third_prob], dim=1).contiguous()
         ac = torch.stack([ac_first, ac_second, ac_third], dim=1)
 
-        return ac, (ac_prob, log_ac_prob), (ac_first_prob, ac_second_hot, ac_third_prob)
+        return ac, (ac_prob, (log_ac_prob.exp() + 1e-8).log()), (ac_first_prob, ac_second_hot, ac_third_prob)
     
     def sample(self, ac, graph_emb, node_emb, g, cands):
         g.ndata['node_emb'] = node_emb
@@ -522,7 +518,7 @@ class SFSPolicy(nn.Module):
         ac_second_prob = F.softmax(logit_second, dim=-1) + 1e-8
         log_ac_second_prob = ac_second_prob.log()
         
-        ac_second_hot = self.gumbel_softmax(ac_second_prob, tau=self.tau, hard=True, g_ratio=1e-3)                                    
+        ac_second_hot = self.gumbel_softmax(logit_second, tau=self.tau, hard=True)                                    
         emb_second = torch.matmul(ac_second_hot, cand_graph_emb)
         ac_second = torch.argmax(ac_second_hot, dim=-1)
 
@@ -568,7 +564,7 @@ class SFSPolicy(nn.Module):
         log_ac_prob = torch.cat([log_ac_first_prob, 
                             log_ac_second_prob, log_ac_third_prob], dim=1).contiguous()
 
-        return (ac_prob, log_ac_prob), (ac_first_prob, ac_second_hot, ac_third_prob)
+        return (ac_prob, (log_ac_prob.exp() + 1e-8).log()), (ac_first_prob, ac_second_hot, ac_third_prob)
         
 
 class GCNEmbed(nn.Module):
