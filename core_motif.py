@@ -354,8 +354,8 @@ class SFSPolicy(nn.Module):
                                 for i, ac_first_prob_i in enumerate(ac_first_prob)], dim=0).contiguous()
 
             log_ac_first_prob = torch.cat([
-                                    torch.cat([log_ac_first_prob_i, log_ac_first_prob_i.new_zeros(
-                                        max(self.max_action - log_ac_first_prob_i.size(0),0),1)]
+                                    torch.cat([log_ac_first_prob_i, torch.full(
+                                        (max(self.max_action - log_ac_first_prob_i.size(0),0),1), float("-inf"), device=self.device)]
                                             , 0).contiguous().view(1,self.max_action)
                                     for i, log_ac_first_prob_i in enumerate(log_ac_first_prob)], dim=0).contiguous()
             
@@ -366,8 +366,8 @@ class SFSPolicy(nn.Module):
             ac_first_prob = torch.cat([ac_first_prob, ac_first_prob.new_zeros(
                             max(self.max_action - ac_first_prob.size(0),0),1)]
                                 , 0).contiguous().view(1,self.max_action)
-            log_ac_first_prob = torch.cat([log_ac_first_prob, log_ac_first_prob.new_zeros(
-                            max(self.max_action - log_ac_first_prob.size(0),0),1)]
+            log_ac_first_prob = torch.cat([log_ac_first_prob, torch.full(
+                            (max(self.max_action - log_ac_first_prob.size(0),0),1), float("-inf"), device=self.device)]
                                 , 0).contiguous().view(1,self.max_action)
 
         # =============================== 
@@ -442,8 +442,8 @@ class SFSPolicy(nn.Module):
                                 for i, ac_third_prob_i in enumerate(ac_third_prob)], dim=0).contiguous()
             
             log_ac_third_prob = torch.cat([
-                                    torch.cat([log_ac_third_prob_i, log_ac_third_prob_i.new_zeros(
-                                        self.max_action - log_ac_third_prob_i.size(0))]
+                                    torch.cat([log_ac_third_prob_i, torch.full(
+                                        (self.max_action - log_ac_third_prob_i.size(0), ), float("-inf"), device=self.device)]
                                             , 0).contiguous().view(1,self.max_action)
                                     for i, log_ac_third_prob_i in enumerate(log_ac_third_prob)], dim=0).contiguous()
 
@@ -455,8 +455,8 @@ class SFSPolicy(nn.Module):
             ac_third_prob = torch.cat([ac_third_prob, ac_third_prob.new_zeros(
                                         1, self.max_action - ac_third_prob.size(1))] 
                                 , -1).contiguous()
-            log_ac_third_prob = torch.cat([log_ac_third_prob, log_ac_third_prob.new_zeros(
-                                        1, self.max_action - log_ac_third_prob.size(1))]
+            log_ac_third_prob = torch.cat([log_ac_third_prob, torch.full(
+                                        (1, self.max_action - log_ac_third_prob.size(1)), float("-inf"), device=self.device)]
                                 , -1).contiguous()
 
         # ==== concat everything ====
@@ -500,8 +500,8 @@ class SFSPolicy(nn.Module):
                         max(self.max_action - ac_first_prob.size(1),0))]
                             , 1).contiguous()
         
-        log_ac_first_prob = torch.cat([log_ac_first_prob, log_ac_first_prob.new_zeros(1,
-                        max(self.max_action - log_ac_first_prob.size(1),0))]
+        log_ac_first_prob = torch.cat([log_ac_first_prob, torch.full((1,
+                        max(self.max_action - log_ac_first_prob.size(1),0)), float("-inf"), device=self.device)]
                             , 1).contiguous()
         emb_first = att_emb[ac[0]].unsqueeze(0)
         
@@ -555,8 +555,8 @@ class SFSPolicy(nn.Module):
         ac_third_prob = torch.cat([ac_third_prob, ac_third_prob.new_zeros(
                                         1, self.max_action - ac_third_prob.size(1))] 
                                 , -1).contiguous()
-        log_ac_third_prob = torch.cat([log_ac_third_prob, log_ac_third_prob.new_zeros(
-                                        1, self.max_action - log_ac_third_prob.size(1))]
+        log_ac_third_prob = torch.cat([log_ac_third_prob, torch.full(
+                                        (1, self.max_action - log_ac_third_prob.size(1)), float("-inf"), device=self.device)]
                                 , -1).contiguous()
 
         # ==== concat everything ====
